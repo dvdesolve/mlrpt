@@ -1,0 +1,517 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="generator" content="Bluefish 2.2.10" >
+<title>mlrpt User Manual</title>
+<meta name="author" content="Neoklis" >
+<meta name="date" content="2020-02-01T07:32:10+0200" >
+<meta name="copyright" content="GPL v2.0 or higher">
+<meta name="keywords" content=
+"Meteor-M Weather Satellite LRPT Image Receiver and Decoder">
+<meta name="description" content=
+"Meteor-M Weather Satellite LRPT Image Receiver and Decoder">
+<meta name="ROBOTS" content="INDEX, FOLLOW">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+</head>
+<body>
+<h3>mlrpt User Manual</h3>
+<ol>
+<li><a href="#Introduction">Introduction</a>
+<ul>
+<li><a href="#Use">Usage</a></li>
+</ul>
+</li>
+<li><a href="#Features">Features</a>
+<ul>
+<li><a href="#Config">Per-Satellite configuration files</a></li>
+<li><a href="#SDR-Setup">SDR Receiver set-up</a></li>
+<li><a href="#Normalize">Normalization of images</a></li>
+<li><a href="#Clahe">Contrast Limited Adaptive Histogram
+Equalization</a></li>
+<li><a href="#Rectify">Rectification of Tangential
+Distortion</a></li>
+<li><a href="#Colorize">Pseudo-Colorization of images</a></li>
+<li><a href="#Invert">Inversion (flipping) of images</a></li>
+</ul>
+</li>
+<li><a href="#QuickStart">Quick Start</a></li>
+<li><a href="#Compilation">Compilation</a></li>
+<li><a href="#Usage">Command line options</a></li>
+<li><a href="#Operation">Operation</a></li>
+<li><a href="#Bugs">Bugs and annoyances</a></li>
+<li><a href="#Acknowledge">Acknowledgments</a></li>
+<li><a href="#Version">Version history</a></li>
+<li><a href="#Copying">Copying</a></li>
+</ol>
+<p><a name="Introduction" id="Introduction"><b>1.
+Introduction</b></a><br>
+mlrpt is a non-interactive command-line version of glrpt, an
+integrated application for Receiving, Decoding and Saving LRPT
+Images from the Russian Meteor-M type of Weather Satellites. mlrpt
+supports reception through the now very popular RTL-SDR receiver
+dongles, available cheaply from many sources. As of version 1.2,
+mlrpt supports reception with the Airspy R2 and Mini SDR
+receivers.</p>
+<p><a name="Use" id="Use"></a></p>
+<pre>
+Usage:
+mlrpt [-c config-file -f frequency -s hhmm-hhmm -t sec -qihv]
+       -c: Specify name of Satellite-specific configuration file.
+       -f: Specify SDR Receiver Frequency (in kHz).
+       -r: Specify Image Rectification: 0 = None, 1 = W2RG, 2 = 5B4AZ.
+       -s: Start and Stop Time in hhmm of Operation.
+       -t: Duration in min of Operation.
+       -q: Run in Quite mode (no messages printed).
+       -i: Invert (flip) Images. Useful for South to North passes.
+       -h: Print this usage information and exit.
+       -v: Print version number and exit.</pre>
+<a name="Features" id="Features"><b>2. Features</b></a><br>
+mlrpt can decode images in real time as they are received from the
+Satellite and save them to disk, after some optional image
+processing. The APID channel images and the combined color image
+are stored in its working directory /home/user/mlrpt/images/ and
+are saved either in the PGM (Portable Grey Map) format or JPEG
+format. As of version 1.2, mlrpt can save images without image
+processing in addition to processed images, if enabled in the
+mlrpt's configuration file.
+<p><a name="Config" id="Config"><b>Per-Satellite configuration
+files</b></a><br>
+With the arrival of a new Meteor-M2 satellite, it is now necessary
+to have separate configuration files for different satellites.
+mlrpt now requires one default configuration file and one such for
+each satellite of interest. The default file may be a link to one
+of the satellite-specific files. The required configuration file is
+specified by the -c command line option: mlrpt
+-c&lt;config-file-name&gt;. Configuration files are assumed to be
+in mlrpt's working directory and only the file name need be
+supplied: mlrpt -c Meteor_M2-2.cfg will cause mlrpt to look for a
+configuration file named Meteor_M2-2.cfg in
+/home/&lt;user-dir&gt;/mlrpt/ and use this to configure itself for
+that satellite.<br>
+It is necessary for at least one default configuration file to be
+present in mlrpt's working directory, named default.cfg. This can
+be a link to a preferred satellite's configuration file.</p>
+<p><a name="SDR-Setup" id="SDR-Setup"><b>SDR Receiver
+set-up</b></a><br>
+mlrpt automatically sets up the SDR Receiver, specified in the
+configuration file, for the required parameters (Center Frequency,
+Sampling Rate, Butterworth LPF cut-off etc) for correct
+operation.</p>
+<p><a name="Normalize" id="Normalize"><b>Normalization of
+images</b></a><br>
+mlrpt performs simple (linear) Histogram Normalization of the LRPT
+images to enhance Contrast and Luminance range. If normalization is
+not desired, it can be disabled in the
+/home/user/mlrpt/&lt;config-file&gt; configuration file.</p>
+<p><a name="Clahe" id="Clahe"><b>C.L.A.H.E.:</b></a><br>
+Contrast Limited Adaptive Histogram Equalization algorithm by Karel
+Zuiderveld, from "Graphics Gems IV", Academic Press, 1994, Computer
+Vision Research Group, Utrecht, The Netherlands. This provides
+excellent regional Enhancement of Contrast, but it has to follow my
+own simple Histogram Normalization function because this is set up
+to ignore the occasional black stripes that Meteor-M2 seems to
+transmit in the images.If CLAHE equalization is not desired, it can
+be disabled in the /home/user/mlrpt/&lt;config-file&gt;
+configuration file.</p>
+<p><a name="Rectify" id="Rectify"><b>Rectification of Tangential
+Distortion:</b></a><br>
+Rich Griffiths W2RG has contributed code to rectify the Geometric
+distortion present in raw images of Meteor-M satellites. This
+distortion is caused by the ever increasing physical length of
+image pixels due to the geometry of the satellite's scanners
+(tangential distortion). The Earth's curvature also contributes to
+this distortion and now mlrpt has built-in code to correct this
+deficiency.</p>
+<p>Since version 1.7, I have added my own take on rectifying
+Meteor-M raw images. The code is similar to W2RG's code, except
+that the creation of added pixels, needed to "stretch" the image,
+is done by linear interpolation rather than filling gaps between
+pixels of the rectified image. Either one of the rectification
+functions (or none) can be specified in the configuration files or
+by a command line option.</p>
+<p><a name="Colorize" id="Colorize"><b>Pseudo-colorization of
+images</b></a><br>
+mlrpt can enhance the colorization of the combined pseudo-color
+image by detecting watery areas in a specified APID image and
+enhancing the blue RGB channel. It can also enhance cloud cover by
+detecting bright areas in the blue channel image and equalizing the
+RGB channels. If colorization is not desired, it can be disabled in
+the /home/user/mlrpt/&lt;config-file&gt; configuration file.</p>
+<p><a name="Invert" id="Invert"><b>Inversion (flipping) of
+images</b></a><br>
+mlrpt can perform 180 degree Rotation (Flip)) of the APT images if
+the -i command line option is given. This is useful for righting
+the inverted images produced by the South-to-North passes of the
+satellites.</p>
+<p><a name="QuickStart" id="QuickStart"><b>3.Quick
+Start</b></a><br>
+First navigate (cd) to the directory you have downloaded mlrpt.
+Usually this will be Downloads/ in your home directory.</p>
+<pre>
+cd ~/Downloads/
+tar jxvf mlrpt-*.*.tar.bz2 
+cd mlrpt-*.*
+./autogen.sh 
+./configure 
+make
+sudo make install
+</pre>
+<p>This should install the "mlrpt" binary in /usr/local/bin. The
+mlrpt's documentation will be installed in
+/usr/local/share/doc/mlrpt/ and its working directory in
+/usr/local/share/examples/mlrpt. The user should then create
+mlrpt's working directory /home/&lt;user-dir&gt;/mlrpt/ and copy
+the files in /usr/local/share/examples/mlrpt/ to this directory. If
+all goes well, you should be able to start mlrpt just by typing
+mlrpt, without any command line options, in the console. For quiet
+operation, start with mlrpt -q. To quit mlrpt and save any images
+that were received (to /home/user/images), type Ctrl-C (user
+interrupt) in the console. Otherwise mlrpt will terminate when its
+internal timer has completed. Default timeout is specified in the
+~/mlrpt/&lt;config-file&gt; configuration file.</p>
+<p>While mlrpt will work with its default configuration, it can now
+be directed to use a satellite-specific configuration file by using
+the -c command line option, e.g. mlrpt -c M2-1.cfg will direct
+mlrpt to use Meteor-M2-1's specific configuration file. The user
+will need to go through the configuration files and edit the
+settings according to each satellite's parameters, mainly the LRPT
+Transmitter frequency, the Symbol Rate and the Image Channels
+currently in use.</p>
+<p>Other settings that might need editing is the Synthesizer
+Frequency Error correction factor where you should enter your SDR
+Receiver's synthesizer error. If in doubt, just leave it as is (0).
+Also the Duration in seconds of the image decoding operation, the
+default of 900sec (15min) may be too long when using fixed antennas
+like QFHA or turnstiles. However, this will not affect successful
+reception of images.</p>
+<p><a name="Compilation" id="Compilation"><b>4.
+Compilation</b></a><br>
+Please note that I use <a href="http://www.voidlinux.org">Void
+Linux AMD64</a> which is a "bleeding edge" type distribution, so
+there may be compilation and/or run time difficulties if you are
+using a relatively old distro. This is mostly true of the basic
+dependencies like the SDR API development libraries
+(librtlsdr-devel and lib airspy-devel).</p>
+<p>To compile the package, it may be preferable to first run the
+included "autogen.sh" script in the package's top directory, to
+produce a fresh build environment. Then the "configure" script can
+be run with optional parameters to override the default settings
+and compiler flags, e.g: ./configure --prefix=/usr CFLAGS="-g -O2"
+will override the default /usr/local installation prefix and the
+"-Wall -O2" compiler flags.</p>
+<p>Running "make" in the package's top directory should produce the
+executable binary in src/. Running "make install" will install the
+binary into /usr/local/bin by default or under the specified
+prefix. It will also install the mlrpt working directory and
+default configuration file into the user's home directory. This
+will have to be edited by the user as required. There is also this
+hypertext documentation file which you can copy to a location of
+your choice.</p>
+<p><a name="Usage" id="Usage"><b>5. Usage and command line
+options</b></a><br></p>
+<pre>
+mlrpt [-c config-file -f frequency -s hhmm-hhmm -t sec -qihv]
+       -c: Specify name of Satellite-specific configuration file.
+       -f: Specify SDR Receiver Frequency (in kHz).
+       -r: Specify Image Rectification: 0 = None, 1 = W2RG, 2 = 5B4AZ.
+       -s: Start and Stop Time in hhmm of Operation.
+       -t: Duration in min of Operation.
+       -q: Run in Quite mode (no messages printed).
+       -i: Invert (flip) Images. Useful for South to North passes.
+       -h: Print this usage information and exit.
+       -v: Print version number and exit.</pre>
+<p><a name="Operation" id="Operation"><b>6. Operation</b></a><br>
+<b>Setting up working directories:</b><br>
+Before mlrpt is used to receive images, it is important to
+understand how the resulting image files are named and saved: mlrpt
+generates file names based on the channel number and the current
+date and time and stores image files in its
+/home/&lt;user-dir&gt;/mlrpt/images/ directory. The image file
+names are created from a base string of the format ddMonyyyy-hhmm
+where dd is the day number, Mon is the month name, yyyy is the year
+and hhmm the current time (UTC) in hours and minutes. To this, the
+LRPT image channel number is appended and then the extension .jpg
+or .pgm or .ppm is also appended, e.g. 05Sep2018-0728-Ch0.pgm is a
+Channel 0 image file that was saved on September 5 2018 at 0728
+UTC.</p>
+Before running mlrpt, it may be necessary to customize some entries
+in the /home/user/mlrpt/&lt;config-file&gt; configuration text
+files in your home directory. These are the items that may need
+editing:
+<ul>
+<li>The choice of the SDR Receiver. mlrpt currently supports the
+popular RTL-SDR receivers and the Airspy R2 and Mini SDR
+receivers.</li>
+<li>The SDR Device Index. Default is 0 (use first SDR device) and
+maximum value is 8 for data sanity checking.</li>
+<li>The I/Q Sample Rate Samples/s. The default is 288000 for the
+RTL-SDR and preferably should not be changed. For the Airspy R2 the
+usable sample rate is 2500000 S/s and for the Mini 3000000
+S/s.</li>
+<li>Low Pass Filter Bandwidth. This should be at least 100kHz and
+less than the SDR Sample Rate. Default is 150kHz</li>
+<li>The Manual Gain setting for the SDR receivers. This is in the
+range 0-100% and default is 90%. A value of 0 will result in
+Automatic Gain Control to be selected.</li>
+<li>The Synthesizer Frequency Error correction factor (default is
+0). This is in Parts per Million (ppm). This is one item worth
+specifying because it helps the PLL lock on the satellite signal a
+little easier.</li>
+<li>The Satellite's Carrier Frequency in kHz. Default is 137900kHz
+for the Meteor-M2-1.</li>
+<li>Duration in seconds of image decoding operation (default 900).
+This is usually to long (15 min) unless a high gain rotating
+directional antenna is used. This value can be changed here or</li>
+<li>The Satellite's Symbol Rate. Default is 72000 for the
+Meteor-M2-1.</li>
+<li>The duration in sec of the image Receiving and Decoding
+Operation. The default is 900 sec but it is usually too long (15
+min) unless a rotatable beam antenna is used. Normally about
+400-600 sec is reasonable. This can also be specified with the -t
+option but in minutes.</li>
+<li>The RRC (Raised Root Cosine) Filter Order. Default is 32. A
+value of 64 may be used with high powered computers.</li>
+<li>The RRC Filter alpha factor. Default is 0.6 and should not
+normally be changed.</li>
+<li>Initial Costas PLL Loop Bandwidth in Hz. Default is 100.</li>
+<li>Costas PLL In-Lock Phase Error Threshold. Below this the PLL
+will be in Locked mode. The PLL Unlocked Threshold will be set at
++5% above this. The actual value will depend on Receiver noise
+levels and antenna performance. It should be selected so that the
+PLL Locked indication should just be off with no signal. Default is
+0.80</li>
+<li>Modulation Mode: 1 = QPSK (M2-2) 2 = DOQPSK (M2-2 72k) 3 =
+IDOQPSK (M2-2 80k)</li>
+<li>Symbol Rate of the QPSK Transmission in Sy/s. Default is 72000
+for Meteor M2.</li>
+<li>Demodulator Interpolation factor. Default is 4 and need not be
+changed.</li>
+<li>Decoded Image Output Mode:<br>
+1 = Output a combined APID channels pseudo-colorized image.<br>
+2 = Output individual monochrome images of APID channels.<br>
+3 = Output both Combined and Channel Images.<br></li>
+<li>File type for saving monochrome channel (APID) images ONLY! 1 =
+Save as jpeg. 2 = Save as PGM file. 3 = Save as both.</li>
+<li>JPEG compression quality factor (percent). Default is 85 %</li>
+<li>Enable saving of Raw (unprocessed) Images as well. Default is 0
+(no).</li>
+<li>Image Histogram Normalization (stretches the image luminance to
+the full 0-255 value range). 0 = no, 1 = yes. Default is 1.</li>
+<li>C.L.A.H.E. (Contrast Limited Adaptive Histogram Equalization).
+Provides excellent Regional Contrast Enhancement. 0 = no, 1 = yes.
+The Image Normalization option above must also be enabled for this
+to have effect. Default is 1.</li>
+<li>Rectification of the geometric distortion present in raw Meteor
+images.<br>
+0 = None, 1 = Use the W2RG algorithm, 2 = Use the 5B4AZ algorithm.
+Default is 1.</li>
+<li>Pseudo-colorize images: Does some speculative colorization of
+the combined pseudo-color image. 0 = no, 1 = yes. Default is 1 but
+should be 0 if the Red channel is replaced by the Infra Red
+channel.</li>
+<li>Image APID's (channels) for Red, Green and Blue used for
+combined pseudo-color image.</li>
+<li>APIDs of images to invert their palette. This is normally
+useful for the Infrared images were cold is dark and hot is white.
+There should be three entries and 0 per place will disable this
+option for the entry.</li>
+<li>The range of values to which each channel image's luminance
+will be mapped before combining into a color composite image. This
+can be used to adjust the color balance of the composite
+image.</li>
+<li>The range of pixel values in the Blue image that will be
+enhanced if Pseudo Colorization is enabled. This helps to improve
+the color of watery areas (seas and lakes) since Normalization
+darkens these areas by stretching the Histogram.</li>
+<li>The directory to save received images in. If this is "Default"
+then the default /home/&lt;user&gt;/mlrpt/images/ directory will be
+used. Otherwise the specified directory will be used but please
+note the the end / in the name is needed.</li>
+</ul>
+<p><a name="Bugs" id="Bugs"><b>7. Bugs and annoyances:</b></a><br>
+I have fixed whatever bugs I came across testing mlrpt but there
+may be some hiding, waiting for the right conditions to appear.
+This is a beta release so I would appreciate bug reports from any
+users.</p>
+<p><a name="Acknowledge" id="Acknowledge"><b>8.
+Acknowledgments:</b></a><br>
+This application was put together by modifying and adapting two
+independent projects:<br>
+The LRPT Demodulator is based and Davide Belloli's (dbdexter-dev)
+"meteor_demod" project on <a href=
+"https://github.com/dbdexter-dev/meteor_demod" target=
+"_blank">GitHub</a>, and the LRPT Decoder is based on Artem
+Litvinovich's (artlav) "meteor_decoder" project, also on <a href=
+"https://github.com/artlav/meteor_decoder" target=
+"_blank">GitHub</a>.<br>
+My sincere thanks go to both developers for producing the
+fundamental code needed to receive and decode LRPT images from the
+Russian Meteor-M class weather satellites. And to the great ideal
+of Free and Open Source software development model for enabling
+this application to be built!</p>
+<p>The Contrast Limited Adaptive Histogram Equalization (CLAHE)
+algorithm is based on code by Karel Zuiderveld, from "Graphics Gems
+IV", Academic Press, 1994, Computer Vision Research Group, Utrecht,
+The Netherlands</p>
+<p>The built-in JPEG compressor code is based on the experimental
+JPEG compressor Codename "Nether Poppleton" by Kornel Lesinski (c)
+2013. All rights reserved. Based on code by Rich Geldreich. The
+original was in C++ but I translated it to C as it is the
+programming language I use.</p>
+<p>The initial Image Rectification code was adapted from the
+original "rectify-jpeg" tool produced by Rich Griffiths W2RG. Later
+I added my own take on image rectification so the mlrpt has two
+such functions for the user to choose from!</p>
+<a name="Version" id="Version"><b>9. Version history:</b></a><br>
+Please note that mlrpt was developed from mlrpt and so up to
+version 0.7-beta it has the same version history:<br>
+<b>Version 0.1-alpha:</b> Created the control code for the RTL-SDR
+Receiver and the frame work to receive and filter streaming I/Q
+samples.
+<p><b>Version 0.2-alpha:</b> After editing and modification, I
+incorporated the LRPT Demodulator code created by Davide Belloli
+"debdexter-dev" and made it demodulate LRPT signals from the live
+stream supplied by the SDR Receiver.<br></p>
+<p><b>Version 0.3-alpha:</b> After editing and modification, I
+incorporated the LRPT Decoder code created by Artem Litvinovich
+"artlav" and made it decode images from the live streaming QPSK
+soft symbols produced by the LRPT Demodulator.</p>
+<p><b>Version 0.4-beta:</b> Once mlrpt was able to receive,
+demodulate and decode LRPT images successfully, I considered it
+ready for a beta status but did not release it as I was mainly
+testing the graphical glrpt.</p>
+<p><b>Version 0.5-beta:</b> Added built-in support for saving the
+monochrome (Greyscale) channel images as JPEG files. The JPEG
+compression code is open sourced and was released by Moodstocks
+SAS. Copyright is owned by the company. Please note that if the
+pseudo-color combined image creation is enabled, it can only be
+saved as a PPM file.</p>
+<p><b>Version 0.6-beta:</b> Fixed minor bugs in the code that saves
+images in JPEG format.</p>
+<p><b>Version 0.7-beta:</b> I have added the (slightly modified) C
+code of the "Contrast Limited Adaptive Histogram Equalization"
+algorithm by Karel Zuiderveld, from "Graphics Gems IV", Academic
+Press, 1994, Computer Vision Research Group, Utrecht, The
+Netherlands. This provides excellent regional enhancement of
+contrast, but it has to follow my own simple Histogram
+Normalization function, which is set up to leave behind the
+occasional black stripes that Meteor-M2 seems to transmit in the
+images.</p>
+<p><b>Version 0.8-beta:</b> Fixed a buffer overrun bug in the
+Histogram Normalization function reported by Coverity Scan.</p>
+<p><b>Version 0.9-beta:</b> Fixed some minor bugs reported by
+LLVM's clang-analyzer tool. Added options to the config file, to
+specify for each channel image a range of values to which the
+image's luminance will be mapped before combining into a color
+composite image. This can be used to adjust the color balance of
+the composite image. Also added options to specify the range of
+pixel values in the Blue image that will enhanced if Pseudo
+Colorization is enabled. This helps to improve the color of watery
+areas (seas and lakes) since Normalization darkens these areas by
+stretching the Histogram.</p>
+<p><b>Version 1.0:</b> Added an new item in the
+/home/user/mlrpt/&lt;config-file&gt; configuration file, to specify
+the directory to save received images in. I am removing the beta
+since mlrpt has been tested by third parties and been debugged.</p>
+<p><b>Version 1.1:</b> Added an new item in the
+/home/user/mlrpt/&lt;config-file&gt; configuration file, to specify
+the Blue channel pixels value above which it is assumed that they
+are in a cloud area. This is used in the pseudo-colorize mode to
+enhance cloud color.</p>
+<p><b>Version 1.2:</b> Added support for the Airspy R2 and Mini SDR
+receivers, using the native lib airspy driver API. Added a new
+option in the mlrpt's configuration file to enable saving of images
+as decoded from the satellite and without image processing
+(Normalization and C.L.A.H.E. contrast enhancement). Modified data
+transfer method to a double-buffered method to improve overall
+performance. Added a new option in mlrpt's configuration file to
+specify Manual Gain Control of the SDR Receiver, in the range
+0-100%. Default is 90%. A value of 0 specifies Auto Gain
+Control.</p>
+<p><b>Version 1.3:</b> Modified the RRC Filter code to reduce
+processor workload by about 5-6%. Not a very substantial result but
+still worthwhile for lower-powered computers.</p>
+<p><b>Version 1.4:</b> Fixed some bugs reported by Tim Kunze that
+were preventing compilation, if one of the supported device drivers
+(libairspy or librtlsdr) was not installed. Also replaced the
+explicit_bzero() library function with memset() since the former
+was not available in Tim Kunze's distribution (and possibly
+others').<br>
+Added an additional option in the mlrpt's configuration file to
+specify the APID for an image channel to invert its palette, e.g.
+change the luminance values from black-to-white into
+white-to-black. This is useful for the Infra-red channel as clouds
+(that are cold) are shown as black, and land that is warmer as
+white</p>
+<p><b>Version 1.4.1:</b> By user request, the acceptable receiver
+filter bandwidth can now be between 100kHz and 200kHz.</p>
+<p><b>Version 1.5:</b> Added code to rectify geometric distortion
+in present in raw Meteor-M images. This code has been extracted and
+adapted from the code of rectify-jpg, contributed by Rich Griffiths
+W2RG.</p>
+<p><b>Version 1.6-beta:</b> With the arrival of a new Meteor-M2
+satellite it is now necessary to have separate configuration files
+for different satellites. mlrpt now requires one default
+configuration file and one such for each satellite of interest. The
+default file may be a link to one of the satellite-specific
+files.</p>
+<p>I have added my own take on rectifying Meteor-M raw images. The
+code is similar to W2RG's code, except that the creation of added
+pixels, needed to "stretch" the image, is done by linear
+interpolation rather than filling gaps between pixels of the
+rectified image. Either one of the rectification functions (or
+none) can be specified in the configuration files or by a command
+line option.</p>
+<p>Davide Belloli (dbdexter-dev) has produced a new version of his
+"meteor_demod" tool, a demodulator for Meteor M2 signals. This new
+version now supports demodulation of both QPSK and OQPSK signals
+and I have now incorporated it in mlrpt. Unfortunately artlav's
+image decoder code "medet" does not support OQPSK, so mlrpt cannot
+decode such signals (from Meteor M2 2 for example) at this time.
+Hopefully some solution to the problem will be found sometime soon,
+especially if artlav responds to such requests made on Github.</p>
+<p>Artyom Litvinovich (artlav) has now produced a new version of
+"medet" which supports decoding of OQPSK signals from Meteor M2-2,
+in both 72k and 80k (interleaved) symbol rates. I have incorporated
+the changes to mlrpt but have not yet been able to get the decoder
+to work with the interleaved 80k symbol rate format. For this
+reason I am releasing mlrpt, provisionally, as version 1.6-beta,
+for testing.</p>
+<p>I have managed to get the decoder to work with the 80k
+Interleaved OQPSK mode but the code is still incomplete and results
+in broken images. However, this is a hopeful sign for me, that I
+may later manage to fix the adaptation of the original decoder.
+Problem - Meteor M2-2 has switched to the 72k sym rate mode!
+(Again).</p>
+<p><b>Version 1.6.1-beta:</b> I made a number of changes to the
+M2-2 80k symbol-rate demodulator and de-interleaver, to complete
+the adaptation of artlav's meteor-decode (medet) tool. Yet again,
+M2-2 changed to 72k mode just as I was ready to test mlrpt.
+However, I was able to test it using pre-recorded raw I/Q data and
+unfortunately the images produced are broken by wide black bands
+and so far have not been able to find out why. I suspect the loss
+of sync detection and if I can, I will try to do something about
+it.</p>
+<p><b>Version 1.6.2-beta:</b> I fixed a bug in the code that
+"fixes" the Differential Offset QPSK modulation scheme of Meteor
+M2-2, which in rare circumstances could cause an off-by-one array
+access, resulting in a segmentation fault.</p>
+<p><b>Version 1.6.2:</b> Meteor M2-2 now seems to be on the 72k
+DOQPSK mode so I cannot do any more testing on the 80k Interleaved
+mode. I have only made some changes to the installer, as described
+earlier, and I am calling this my latest release version.</p>
+<p><b>Version 1.6.3:</b> Made some changes to the Costas PLL loop
+to improve phase lock capture and stability.</p>
+<p><b>Version 1.6.4:</b> After a report by Gianpi IK1TTD, I edited
+the configuration files for the proper default SDR device (RTL-SDR)
+and arranged for the mlrpt code to abnort on some configuration
+errors.</p>
+<a name="Copying" id="Copying"><b>10. Copying</b></a> This software
+package is released under the GNU Public License. Please see the
+COPYING file for more details.<br>
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+</body>
+</html>

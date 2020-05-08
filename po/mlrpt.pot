@@ -1,0 +1,519 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Neoklis Kyriazis nkcyham@yahoo.com
+# This file is distributed under the same license as the GNU mlrpt package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: GNU mlrpt 1.6.4\n"
+"Report-Msgid-Bugs-To: nkcyham@yahoo.com\n"
+"POT-Creation-Date: 2020-02-01 07:25+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/Mlrpt/image.c:50
+msgid "Image buffer empty? Normalization not performed"
+msgstr ""
+
+#: src/Mlrpt/image.c:89
+msgid "Image buffer flat? Normalization not performed"
+msgstr ""
+
+#: src/Mlrpt/image.c:94
+msgid "Performing histogram normalization"
+msgstr ""
+
+#: src/Mlrpt/image.c:135
+msgid "Image buffer empty? Rotation not performed"
+msgstr ""
+
+#: src/Mlrpt/image.c:140
+msgid "Rotating image by 180 degrees"
+msgstr ""
+
+#: src/Mlrpt/main.c:107
+msgid "Failed to read mlrptrc configuration file - exiting"
+msgstr ""
+
+#: src/Mlrpt/main.c:116
+msgid "Failed to start Receiver and Decoder - exiting"
+msgstr ""
+
+#: src/Mlrpt/main.c:146
+msgid "Exiting via User Interrupt"
+msgstr ""
+
+#: src/Mlrpt/main.c:154
+msgid "Segmentation Fault - exiting"
+msgstr ""
+
+#: src/Mlrpt/main.c:158
+msgid "Floating Point Exception - exiting"
+msgstr ""
+
+#: src/Mlrpt/main.c:162
+msgid "Abort Signal received - exiting"
+msgstr ""
+
+#: src/Mlrpt/main.c:166
+msgid "Termination Request received - exiting"
+msgstr ""
+
+#: src/Mlrpt/operation.c:38
+msgid "Failed to Initialize RTL-SDR"
+msgstr ""
+
+#: src/Mlrpt/operation.c:41
+msgid "Decoding from RTL-SDR Receiver"
+msgstr ""
+
+#: src/Mlrpt/operation.c:50
+msgid "Failed to Initialize Airspy"
+msgstr ""
+
+#: src/Mlrpt/operation.c:53
+msgid "Decoding from Airspy Receiver"
+msgstr ""
+
+#: src/Mlrpt/operation.c:58
+msgid "SDR Device Type Invalid - Exiting"
+msgstr ""
+
+#: src/Mlrpt/operation.c:120
+#, c-format
+msgid "Operation Timer Started: %d sec"
+msgstr ""
+
+#: src/Mlrpt/operation.c:124
+msgid "Decoding of LRPT Images Started"
+msgstr ""
+
+#: src/Mlrpt/operation.c:139
+msgid "Pause Timer Expired"
+msgstr ""
+
+#: src/Mlrpt/operation.c:142
+msgid "Operation Timer Expired"
+msgstr ""
+
+#: src/Mlrpt/operation.c:166
+#, c-format
+msgid "Operation Timer (%d sec) excessive?"
+msgstr ""
+
+#: src/Mlrpt/operation.c:171
+#, c-format
+msgid "Operation Timer set to %d sec"
+msgstr ""
+
+#: src/Mlrpt/operation.c:219
+msgid "Start-Stop times invalid - exiting"
+msgstr ""
+
+#: src/Mlrpt/operation.c:246
+msgid "Stop Time ahead of Start Time - exiting"
+msgstr ""
+
+#: src/Mlrpt/operation.c:257
+#, c-format
+msgid "Operation Time (%d sec) excessive?"
+msgstr ""
+
+#: src/Mlrpt/operation.c:263
+#, c-format
+msgid "Paused till %02d:%02d UTC. Operation Timer set to %d sec"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:37
+#, c-format
+msgid "Error reading %s: Premature EOF (End Of File)"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:105
+#, c-format
+msgid "Error reading %s: Line longer than 80 characters"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:117
+#, c-format
+msgid "%s: %s"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:152
+#, c-format
+msgid "Opening Config file %s"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:158
+msgid "Failed to open mlrptrc file"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:176
+msgid "Invalid SDR Radio Receiver type - Assuming RTL-SDR"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:186
+msgid "Invalid librtlsdr Device Index - Assuming 0"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:191
+msgid "SDR Receiver I/Q Sample Rate"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:201
+msgid "Manual Gain Setting"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:208
+msgid "Invalid Manual Gain Setting. Assuming a value of 100%"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:218
+msgid "Invalid Frequency Correction Factor - Assuming 0"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:222
+msgid "Satellite Frequency kHz"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:232
+msgid "Decoding Duration"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:242
+#, c-format
+msgid "Decoding Duration in mlrptrc (%d sec) excessive?\n"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:249
+msgid "RRC Filter Order"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:254
+msgid "RRC Filter alpha factor"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:259
+msgid "Costas PLL Loop Bandwidth"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:264
+msgid "Costas PLL Locked Threshold"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:270
+msgid "Transmitter Modulation Mode"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:275
+msgid "Transmitter QPSK Symbol Rate"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:280
+msgid "Demodulator Interpolation Factor"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:285
+msgid "LRPT Decoder Output Mode"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:304
+msgid "Image Output Mode option invalid"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:309
+msgid "Save As image file type"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:328
+msgid "Image Save As option invalid"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:333
+msgid "JPEG Quality Factor"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:338
+msgid "LRPT Decoder Save Raw Images flag"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:343
+msgid "LRPT Decoder Image Normalize flag"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:348
+msgid "LRPT Decoder Image CLAHE Enhance flag"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:353
+msgid "LRPT Decoder Image Rectify flag"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:360
+msgid "Invalid Rectify Function index - assuming 1"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:366
+msgid "LRPT Decoder Image Colorize flag"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:371
+msgid "LRPT Decoder Red APID"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:376
+msgid "LRPT Decoder Green APID"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:381
+msgid "LRPT Decoder Blue APID"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:386
+msgid "Invert Palette APID"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:396
+msgid "Red Channel Normalization Range"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:404
+msgid "Green Channel Normalization Range"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:412
+msgid "Blue Channel Normalization Range"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:421
+msgid "Blue Channel min pixel value in pseudo-color image"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:427
+msgid "Blue Channel max pixel value to enhance in pseudo-color image"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:433
+msgid "Blue Channel cloud area pixel value threshold"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:438
+msgid "Directory to save images in"
+msgstr ""
+
+#: src/Mlrpt/rc_config.c:451
+msgid "Invalid Roofing Filter Bandwidth - Assuming 110000"
+msgstr ""
+
+#: src/Mlrpt/utils.c:123
+#, c-format
+msgid ""
+"Usage:  mlrpt -[c<config-file-name> f<frequency> s<hhmm-hhmm> t<sec> -qihv]\n"
+"       -c: Specify configuration file name in ~/mlrpt/\n"
+"       -f: Specify SDR Receiver Frequency (in kHz).\n"
+"       -r: Specify Image Rectification: 0 = None, 1 = W2RG, 2 = 5B4AZ.\n"
+"       -s: Start and Stop Time in hhmm of Operation.\n"
+"       -t: Duration in min of Operation.\n"
+"       -q: Run in Quiet mode (no messages printed).\n"
+"       -i: Invert (flip) Images. Useful for South to North passes.\n"
+"       -h: Print this usage information and exit.\n"
+"       -v: Print version number and exit.\n"
+msgstr ""
+
+#: src/Mlrpt/utils.c:144 src/Mlrpt/utils.c:157
+msgid "mlrpt: A memory allocation request failed"
+msgstr ""
+
+#: src/Mlrpt/utils.c:188
+#, c-format
+msgid "Failed to open file: %s"
+msgstr ""
+
+#: src/Mlrpt/utils.c:215 src/Mlrpt/utils.c:251
+#, c-format
+msgid "Saving Image: %s"
+msgstr ""
+
+#: src/Mlrpt/utils.c:224
+#, c-format
+msgid "Failed saving image: %s"
+msgstr ""
+
+#: src/Mlrpt/utils.c:257
+msgid "# Created by mlrpt"
+msgstr ""
+
+#: src/Mlrpt/utils.c:261 src/Mlrpt/utils.c:277
+msgid "mlrpt: Error writing image to file"
+msgstr ""
+
+#: src/Mlrpt/utils.c:262 src/Mlrpt/utils.c:278
+msgid "Error writing image to file"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:90 src/sdr/rtlsdr.c:98 src/sdr/airspy.c:185
+msgid "Failed to set SDR Frequency"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:104
+#, c-format
+msgid "Set SDR Frequency to %0.1fkHz"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:124
+msgid "Failed to set Tuner Gain Mode"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:131 src/sdr/airspy.c:325
+msgid "Setting Tuner Gain Mode to Auto"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:136 src/sdr/airspy.c:332
+msgid "Setting Tuner Gain Mode to Manual"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:142
+msgid "Failed to set RTL2832 Digital AGC"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:171
+msgid "Failed to get Tuner Number of Gains"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:180
+msgid "Failed to get Tuner Gains Array"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:207 src/sdr/airspy.c:243
+#, c-format
+msgid "Setting Tuner Gain to %ddB"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:212 src/sdr/airspy.c:250
+msgid "Failed to set Tuner Gain"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:258
+msgid "Failed to open RTL-SDR device"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:263
+msgid "Initializing RTLSDR Device "
+msgstr ""
+
+#: src/sdr/rtlsdr.c:264
+msgid "RTLSDR Device Information:"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:272
+msgid "Failed to get device usb strings"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:278
+#, c-format
+msgid ""
+"Device Index: %d Name: %s\n"
+"Manufacturer: %s Product: %s Serial: %s"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:287
+msgid "Failed to get Tuner type"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:291
+#, c-format
+msgid "Tuner Type: %s"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:305
+msgid "Failed to set Frequency Correction factor"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:313
+#, c-format
+msgid "Frequency Correction: %d ppm"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:335 src/sdr/airspy.c:270
+msgid "Failed to set ADC Sample Rate"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:346
+msgid "Failed to get ADC Sample Rate"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:350
+#, c-format
+msgid "ADC Sample Rate: %d S/s"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:357
+msgid "Failed to Reset sampling Buffer"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:393
+msgid "Failed to create async read thread"
+msgstr ""
+
+#: src/sdr/rtlsdr.c:398
+msgid "RTLSDR Device Initialized OK"
+msgstr ""
+
+#: src/sdr/airspy.c:162
+#, c-format
+msgid "airspy_read_async() returned %d\n"
+msgstr ""
+
+#: src/sdr/airspy.c:192
+#, c-format
+msgid "Set Center Frequency to %dkHz"
+msgstr ""
+
+#: src/sdr/airspy.c:213
+msgid "Failed to set LNA Gain Mode"
+msgstr ""
+
+#: src/sdr/airspy.c:222
+msgid "Failed to set Mixer Gain Mode"
+msgstr ""
+
+#: src/sdr/airspy.c:290
+msgid "Failed to open Airspy device"
+msgstr ""
+
+#: src/sdr/airspy.c:346
+msgid "Failed to create Airspy Streaming Thread"
+msgstr ""
+
+#: src/lrpt_decode/met_jpg.c:66 src/lrpt_decode/met_jpg.c:114
+msgid "Bad compression parameters"
+msgstr ""
+
+#: src/lrpt_decode/met_jpg.c:181
+msgid "Failed to perform C.L.A.H.E. Image Contrast Enhancement"
+msgstr ""
+
+#: src/lrpt_decode/met_jpg.c:345 src/lrpt_decode/met_jpg.c:360
+msgid "Decoder: bad DC huffman code!"
+msgstr ""
+
+#: src/lrpt_decode/rectify_meteor.c:205
+#, c-format
+msgid ""
+"\n"
+"mlrpt: A problem occurred spacing the pixels\n"
+msgstr ""
+
+#: src/lrpt_decode/rectify_meteor.c:533
+msgid "Using Rectify Function 1 (W2RG)"
+msgstr ""
+
+#: src/lrpt_decode/rectify_meteor.c:538
+msgid "Using Rectify Function 2 (5B4AZ)"
+msgstr ""
