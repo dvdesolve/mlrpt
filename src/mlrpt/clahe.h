@@ -14,17 +14,42 @@
 
 /*****************************************************************************/
 
-#ifndef SDR_AIRSPY_H
-#define SDR_AIRSPY_H
+#ifndef MLRPT_CLAHE_H
+#define MLRPT_CLAHE_H
 
 /*****************************************************************************/
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /*****************************************************************************/
 
-bool Airspy_Initialize(void);
-void Airspy_Close_Device(void);
+/* Contextual regions actually used (image size is % 8) */
+#define REGIONS_X   8
+#define REGIONS_Y   8
+
+/* Number of greybins for histogram ("dynamic range"). This maximum */
+#define NUM_GREYBINS    256
+
+/* Normalized cliplimit (higher values give more contrast) */
+#define CLIP_LIMIT  3.0
+
+/*****************************************************************************/
+
+typedef unsigned char kz_pixel_t;
+
+/*****************************************************************************/
+
+bool CLAHE(
+        kz_pixel_t *pImage,
+        uint32_t uiXRes,
+        uint32_t uiYRes,
+        kz_pixel_t Min,
+        kz_pixel_t Max,
+        uint32_t uiNrX,
+        uint32_t uiNrY,
+        uint32_t uiNrBins,
+        double fCliplimit);
 
 /*****************************************************************************/
 

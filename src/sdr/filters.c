@@ -12,32 +12,42 @@
  *  http://www.gnu.org/copyleft/gpl.txt
  */
 
-#include "filters.h"
-#include "../common/shared.h"
+/*****************************************************************************/
 
-/*-----------------------------------------------------------------------*/
+#include "filters.h"
+
+#include "../common/common.h"
+#include "../common/shared.h"
+#include "../mlrpt/utils.h"
+
+#include <math.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+/*****************************************************************************/
 
 /* Init_Chebyshev_Filter()
  *
  * Calculates Chebyshev recursive filter coefficients.
  * The filter_data_t struct is defined in common.h.
  */
-  BOOLEAN
-Init_Chebyshev_Filter(
-    filter_data_t *filter_data,
-    uint buf_len,
-    uint filter_bw,
-    uint sample_rate,
-    double ripple,
-    uint num_poles,
-    uint type )
-{
+bool Init_Chebyshev_Filter(
+        filter_data_t *filter_data,
+        uint32_t buf_len,
+        uint32_t filter_bw,
+        uint32_t sample_rate,
+        double ripple,
+        uint32_t num_poles,
+        uint32_t type) {
   double *ta = NULL, *tb = NULL;
   double a0, a1, a2, b1, b2, sa, sb, gain;
   int i, p;
   double rp, ip, es, vx, kx, t, w, m;
   double d, xn0, xn1, xn2, yn1, yn2, k, tmp;
+  size_t mreq;
 
+  /* Initialize filter parameters */
   filter_data->cutoff   = (double)(filter_bw / 2);
   filter_data->cutoff  /= (double)sample_rate;
   filter_data->ripple   = ripple;
@@ -47,7 +57,7 @@ Init_Chebyshev_Filter(
   filter_data->samples_buf_len = buf_len;
 
   /* Allocate data arrays */
-  size_t mreq = (size_t)(filter_data->npoles + 3) * sizeof(double);
+  mreq = (size_t)(filter_data->npoles + 3) * sizeof(double);
   mem_alloc( (void **)&ta, mreq );
   mem_alloc( (void **)&tb, mreq );
 
@@ -152,8 +162,8 @@ Init_Chebyshev_Filter(
     }
 
   } /* for( p = 1; p <= np / 2; p++ ) */
-  free_ptr( (void **)&ta );
-  free_ptr( (void **)&tb );
+  free_ptr( (void **)&ta);
+  free_ptr( (void **)&tb);
 
   /* Finish combining coefficients */
   filter_data->b[2] = 0.0;
@@ -186,20 +196,19 @@ Init_Chebyshev_Filter(
     filter_data->a[i] /= gain;
   }
 
-  return( TRUE );
-} /* Init_Chebyshev_Filter() */
+  /* TODO no alternative way */
+  return true;
+}
 
-/*-----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* DSP_Filter()
  *
  * DSP Recursive Filter, normally used as low pass
  */
-  void
-DSP_Filter( filter_data_t *filter_data )
-{
+void DSP_Filter(filter_data_t *filter_data) {
   /* Index to samples buffer */
-  uint buf_idx, idx, npp1, len;
+  uint32_t buf_idx, idx, npp1, len;
   double y, yn0;
 
   /* Filter samples in the buffer */
@@ -239,8 +248,4 @@ DSP_Filter( filter_data_t *filter_data )
     filter_data->samples_buf[buf_idx] = yn0;
 
   } /* for( buf_idx = 0; buf_idx < len; buf_idx++ ) */
-
-} /* DSP_Filter() */
-
-/*-----------------------------------------------------------------------*/
-
+}

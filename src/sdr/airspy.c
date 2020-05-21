@@ -12,8 +12,45 @@
  *  http://www.gnu.org/copyleft/gpl.txt
  */
 
+/*****************************************************************************/
+
 #include "airspy.h"
+
+#include "../common/common.h"
 #include "../common/shared.h"
+#include "../mlrpt/utils.h"
+#include "filters.h"
+
+#include <libairspy/airspy.h>
+
+#include <pthread.h>
+#include <semaphore.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+/*****************************************************************************/
+
+#define AIRSPY_DECIMATE     8
+#define AIRSPY_GAIN_AUTO    1
+#define AIRSPY_GAIN_MANUAL  0
+#define MAX_LINEARITY_GAIN  21.0
+#define MAX_GAIN            45.0
+
+/*****************************************************************************/
+
+static int Airspy_Data_Cb(airspy_transfer *transfer);
+static void *Airspy_Read_Async(void *arg);
+static void Airspy_Set_Center_Frequency(uint32_t center_freq);
+static bool Airspy_Set_Tuner_Gain_Mode(int mode);
+static bool Airspy_Set_Tuner_Gain(uint32_t gain);
+static bool Airspy_Set_Sample_Rate(void);
+static bool Airspy_Open_Device(void);
+
+/*****************************************************************************/
 
 static struct airspy_device *device = NULL;
 static pthread_t airspy_pthread_id;
@@ -23,25 +60,23 @@ static double
   *buf_q[2] = { NULL, NULL };
 static uint8_t buf_cnt = 0;
 
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* Airspy_Data_Cb()
  *
  * Callback function for airspy_read_async()
  */
-  static int
-Airspy_Data_Cb( airspy_transfer *transfer )
-{
-  static uint buf_len = 0, decim_len;
-  uint idx, ids, dcnt;
+static int Airspy_Data_Cb(airspy_transfer *transfer) {
+  static uint32_t buf_len = 0, decim_len;
+  uint32_t idx, ids, dcnt;
   size_t mreq;
 
   /* Initialize on first call */
   if( !buf_len )
   {
     /* Create local I/Q data buffers */
-    buf_len   = (uint)( transfer->sample_count ) * 2;
-    decim_len = (uint)( transfer->sample_count ) / AIRSPY_DECIMATE;
+    buf_len   = (uint32_t)( transfer->sample_count ) * 2;
+    decim_len = (uint32_t)( transfer->sample_count ) / AIRSPY_DECIMATE;
 
     /* Allocate I/Q data buffers */
     mreq  = (size_t)decim_len * sizeof( double );
@@ -145,36 +180,32 @@ Airspy_Data_Cb( airspy_transfer *transfer )
   if( !sval ) sem_post( &demod_semaphore );
 
   return( AIRSPY_SUCCESS );
-} /* Airspy_Data_Cb() */
+}
 
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* Airspy_Read_Async()
  *
  * Pthread function for async reading of RTLSDR I/Q samples
  */
-  static void *
-Airspy_Read_Async( void *arg )
-{
+static void *Airspy_Read_Async(void *arg) {
   int ret = airspy_start_rx( device, Airspy_Data_Cb, NULL );
 
   if( ret != SUCCESS )
-    fprintf( stderr, _("airspy_read_async() returned %d\n"), ret );
+    fprintf( stderr, "airspy_read_async() returned %d\n", ret );
 
   sem_wait( &airspy_semaphore );
 
   return( NULL );
-} /* Airspy_Read_Async() */
+}
 
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* Airspy_Set_Center_Frequency()
  *
  * Sets the Center Frequency of the Airspy Tuner
  */
-  static void
-Airspy_Set_Center_Frequency( uint32_t center_freq )
-{
+static void Airspy_Set_Center_Frequency(uint32_t center_freq) {
   int ret;
   char mesg[MESG_SIZE];
 
@@ -182,27 +213,24 @@ Airspy_Set_Center_Frequency( uint32_t center_freq )
   ret = airspy_set_freq( device, center_freq );
   if( ret != AIRSPY_SUCCESS )
   {
-    Print_Message( _("Failed to set SDR Frequency"), ERROR_MESG );
+    Print_Message( "Failed to set SDR Frequency", ERROR_MESG );
     return;
   }
 
   /* Print out center frequency */
   center_freq /= 1000;
   snprintf( mesg, sizeof(mesg),
-      _("Set Center Frequency to %dkHz"), center_freq );
+      "Set Center Frequency to %ukHz", center_freq );
   Print_Message( mesg, INFO_MESG );
+}
 
-} /* Airspy_Set_Center_Frequency() */
-
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* Airspy_Set_Tuner_Gain_Mode()
  *
  * Sets the Tuner Gain mode to Auto or Manual
  */
-  static BOOLEAN
-Airspy_Set_Tuner_Gain_Mode( int mode )
-{
+static bool Airspy_Set_Tuner_Gain_Mode(int mode) {
   int ret;
 
   /* Set Tuner LNA Gain Mode */
@@ -210,8 +238,8 @@ Airspy_Set_Tuner_Gain_Mode( int mode )
   if( ret != AIRSPY_SUCCESS )
   {
     Print_Message(
-        _("Failed to set LNA Gain Mode"), ERROR_MESG );
-    return( FALSE );
+        "Failed to set LNA Gain Mode", ERROR_MESG );
+    return( false );
   }
 
   /* Set Tuner Mixer Gain Mode */
@@ -219,99 +247,91 @@ Airspy_Set_Tuner_Gain_Mode( int mode )
   if( ret != AIRSPY_SUCCESS )
   {
     Print_Message(
-        _("Failed to set Mixer Gain Mode"), ERROR_MESG );
-    return( FALSE );
+        "Failed to set Mixer Gain Mode", ERROR_MESG );
+    return( false );
   }
 
-  return( TRUE );
-} /* Airspy_Set_Tuner_Gain_Mode() */
+  return( true );
+}
 
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* Airspy_Set_Tuner_Gain()
  *
  * Set the Tuner Gain if in Manual mode
  */
-  static BOOLEAN
-Airspy_Set_Tuner_Gain( uint32_t gain )
-{
+static bool Airspy_Set_Tuner_Gain(uint32_t gain) {
   char mesg[MESG_SIZE];
 
   /* Try to set the Tuner Gain */
 
   double value = MAX_LINEARITY_GAIN * (double)gain / 100.0 + 0.5;
-  snprintf( mesg, sizeof(mesg), _("Setting Tuner Gain to %ddB"),
+  snprintf( mesg, sizeof(mesg), "Setting Tuner Gain to %ddB",
       (int)(value * MAX_GAIN / MAX_LINEARITY_GAIN) );
   Print_Message( mesg, INFO_MESG );
 
   int ret = airspy_set_linearity_gain( device, (uint8_t)value );
   if( ret != AIRSPY_SUCCESS )
   {
-    Print_Message( _("Failed to set Tuner Gain"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to set Tuner Gain", ERROR_MESG );
+    return( false );
   }
 
-  return( TRUE );
-} /* Airspy_Set_Tuner_Gain() */
+  return( true );
+}
 
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* Airspy_Set_Sample_Rate()
  *
  * Sets the Airspy Sample Rate
  */
-  static BOOLEAN
-Airspy_Set_Sample_Rate( void )
-{
+static bool Airspy_Set_Sample_Rate(void) {
   /* Set Airspy Sample Rate */
   int ret = airspy_set_samplerate( device, rc_data.sdr_samplerate );
   if( ret != AIRSPY_SUCCESS )
   {
-    Print_Message( _("Failed to set ADC Sample Rate"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to set ADC Sample Rate", ERROR_MESG );
+    return( false );
   }
 
-  return( TRUE );
-} /* Airspy_Set_Sample_Rate() */
+  return( true );
+}
 
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* Airspy_Open_Device()
  *
  * Opens an Airspy SDR device for use
  */
-  static BOOLEAN
-Airspy_Open_Device( void )
-{
+static bool Airspy_Open_Device(void) {
   /* Open Airspy Device */
   int ret = airspy_open( &device );
   if( ret != AIRSPY_SUCCESS )
   {
-    Print_Message( _("Failed to open Airspy device"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to open Airspy device", ERROR_MESG );
+    return( false );
   }
 
-  return( TRUE );
-} /* Airspy_Open_Device() */
+  return( true );
+}
 
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* Airspy_Initialize()
  *
  * Initializes an Airspy SDR device for use
  */
-  BOOLEAN
-Airspy_Initialize( void )
-{
+bool Airspy_Initialize(void) {
   int ret;
 
   /* Open Airspy Device */
   if( !Airspy_Open_Device() )
-    return( FALSE );
+    return( false );
 
   /* Set the Airspy ADC/DSP sample rate */
   if( !Airspy_Set_Sample_Rate() )
-    return( FALSE );
+    return( false );
 
   /* Demodulator effective sample rate */
   rc_data.demod_samplerate = rc_data.sdr_samplerate / AIRSPY_DECIMATE;
@@ -322,18 +342,18 @@ Airspy_Initialize( void )
   /* Set Tuner Gain Mode to Auto */
   if( rc_data.tuner_gain == 0 )
   {
-    Print_Message( _("Setting Tuner Gain Mode to Auto"), INFO_MESG );
+    Print_Message( "Setting Tuner Gain Mode to Auto", INFO_MESG );
     if( !Airspy_Set_Tuner_Gain_Mode(AIRSPY_GAIN_AUTO) )
-      return( FALSE );
+      return( false );
   }
   else
   {
     /* Set Tuner Gain Mode to Manual setting */
-    Print_Message( _("Setting Tuner Gain Mode to Manual"), INFO_MESG );
+    Print_Message( "Setting Tuner Gain Mode to Manual", INFO_MESG );
     if( !Airspy_Set_Tuner_Gain_Mode(AIRSPY_GAIN_MANUAL) )
-      return( FALSE );
+      return( false );
     if( !Airspy_Set_Tuner_Gain(rc_data.tuner_gain) )
-      return( FALSE );
+      return( false );
   }
 
   /* Set the Center Frequency of the Airspy Device */
@@ -343,25 +363,23 @@ Airspy_Initialize( void )
   ret = pthread_create( &airspy_pthread_id, NULL, Airspy_Read_Async, NULL );
   if( ret != SUCCESS )
   {
-    Print_Message( _("Failed to create Airspy Streaming Thread"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to create Airspy Streaming Thread", ERROR_MESG );
+    return( false );
   }
   sleep( 1 );
 
   sem_init( &airspy_semaphore,  0, 0 );
 
-  return( TRUE );
-} /* Airspy_Initialize() */
+  return( true );
+}
 
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* Airspy_Close_Device()
  *
  * Closes and frees an open Airspy device
  */
-  void
-Airspy_Close_Device( void )
-{
+void Airspy_Close_Device(void) {
   if( device != NULL )
   {
     if( airspy_is_streaming(device) )
@@ -369,7 +387,4 @@ Airspy_Close_Device( void )
     airspy_close( device );
     device = NULL;
   }
-} /* Airspy_Close_Device() */
-
-/*----------------------------------------------------------------------*/
-
+}

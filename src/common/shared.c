@@ -12,34 +12,41 @@
  *  http://www.gnu.org/copyleft/gpl.txt
  */
 
+/*****************************************************************************/
+
 #include "shared.h"
+
+#include "../decoder/huffman.h"
+#include "../decoder/met_to_data.h"
+#include "../mlrpt/rc_config.h"
+#include "../sdr/filters.h"
+#include "common.h"
+
+#include <semaphore.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+/*****************************************************************************/
 
 /* Runtime config data */
 rc_data_t rc_data;
-
-/* Demodulator object */
-Demod_t *demodulator = NULL;
 
 /* Chebyshev filter data I/Q */
 filter_data_t filter_data_i;
 filter_data_t filter_data_q;
 
-/* Playback control semaphore */
+/* Demodulator control semaphore */
 sem_t demod_semaphore;
 
-/* Meteor Image Decoder objects */
-BOOLEAN no_time_yet = TRUE;
+/* Meteor decoder variables */
+bool no_time_yet = true;
 int last_time, first_time;
-
 ac_table_rec_t *ac_table = NULL;
 size_t ac_table_len;
+mtd_rec_t mtd_record;
 
 /* Channel images and sizes */
 uint8_t *channel_image[CHANNEL_IMAGE_NUM];
 size_t   channel_image_size;
-uint32_t channel_image_height, channel_image_width;
-
-mtd_rec_t mtd_record;
-
-/*------------------------------------------------------------------------*/
-
+uint32_t channel_image_width, channel_image_height;

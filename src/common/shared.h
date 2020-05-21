@@ -12,41 +12,48 @@
  *  http://www.gnu.org/copyleft/gpl.txt
  */
 
-#ifndef SHARED_H
-#define SHARED_H    1
+/*****************************************************************************/
 
+#ifndef COMMON_SHARED_H
+#define COMMON_SHARED_H
+
+/*****************************************************************************/
+
+#include "../decoder/huffman.h"
+#include "../decoder/met_to_data.h"
+#include "../mlrpt/rc_config.h"
+#include "../sdr/filters.h"
 #include "common.h"
 
+#include <semaphore.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+/*****************************************************************************/
 
 /* Runtime config data */
 extern rc_data_t rc_data;
-
-/* Demodulator object */
-extern Demod_t *demodulator;
 
 /* Chebyshev filter data I/Q */
 extern filter_data_t filter_data_i;
 extern filter_data_t filter_data_q;
 
-/* Playback control semaphore */
+/* Demodulator control semaphore */
 extern sem_t demod_semaphore;
 
-/* Meteor Image Decoder objects */
-extern BOOLEAN no_time_yet;
+/* Meteor decoder variables */
+extern bool no_time_yet;
 extern int last_time, first_time;
-
 extern ac_table_rec_t *ac_table;
 extern size_t ac_table_len;
+extern mtd_rec_t mtd_record;
 
 /* Channel images and sizes */
 extern uint8_t *channel_image[CHANNEL_IMAGE_NUM];
 extern size_t   channel_image_size;
-extern uint32_t channel_image_height, channel_image_width;
+extern uint32_t channel_image_width, channel_image_height;
 
-extern mtd_rec_t mtd_record;
-
-extern int corr_tab[256][256];
-extern int ac_lookup[65536], dc_lookup[65536];
+/*****************************************************************************/
 
 #endif
-

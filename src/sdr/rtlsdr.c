@@ -12,8 +12,62 @@
  *  http://www.gnu.org/copyleft/gpl.txt
  */
 
+/*****************************************************************************/
+
 #include "rtlsdr.h"
+
+#include "../common/common.h"
 #include "../common/shared.h"
+#include "../mlrpt/utils.h"
+#include "filters.h"
+
+#include <rtl-sdr.h>
+
+#include <errno.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+/*****************************************************************************/
+
+/* Length of RTL-SDR I/Q buffer length */
+#define RTLSDR_BUF_LEN  65536
+
+/* Settings for various rtlsdr functions */
+#define TUNER_GAIN_MANUAL   1
+#define TUNER_GAIN_AUTO     0
+#define RTL_DAGC_ON         1
+#define RTL_DAGC_OFF        0
+#define AGC_SCALE_RANGE     100
+
+/* These are actually the default settings of
+ * rtlsdr_read_async() but I need them to define
+ * the size of the working samples_buf, which must
+ * be the same as the async buffers */
+#define NUM_ASYNC_BUF   15
+
+#define TUNER_TYPES \
+  "UNKNOWN", \
+  "E4000", \
+  "FC0012", \
+  "FC0013", \
+  "FC2580", \
+  "R820T", \
+  "R828D"
+
+/*****************************************************************************/
+
+static void RtlSdr_Cb(unsigned char *buf, uint32_t len, void *ctx);
+static void *RtlSdr_Read_Async(void *pid);
+static bool RtlSdr_Set_Center_Freq(uint32_t center_freq);
+static bool RtlSdr_Set_Tuner_Gain_Mode(int mode);
+static bool RtlSdr_Set_Tuner_Gain(uint32_t gain);
+
+/*****************************************************************************/
 
 /* rtlsdr device handle */
 static rtlsdr_dev_t *dev = NULL;
@@ -22,15 +76,13 @@ static double
   *buf_q[2] = { NULL, NULL };
 static uint8_t buf_cnt;
 
-/*-------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* RtlSdr_Cb()
  *
  * Callback function for rtlsdr_read_async()
  */
-  static void
-RtlSdr_Cb( unsigned char *buf, uint32_t len, void *ctx )
-{
+static void RtlSdr_Cb(unsigned char *buf, uint32_t len, void *ctx) {
   uint32_t ids = 0, idx = 0;
 
   /* Convert sample values to range of int8_t */
@@ -53,33 +105,28 @@ RtlSdr_Cb( unsigned char *buf, uint32_t len, void *ctx )
   int sval;
   sem_getvalue( &demod_semaphore, &sval );
   if( !sval ) sem_post( &demod_semaphore );
+}
 
-} /* RtlSdr_Cb() */
-
-/*-----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* RtlSdr_Read_Async()
  *
  * Pthread function for async reading of RTL I/Q samples
  */
-  static void *
-RtlSdr_Read_Async( void *pid )
-{
+static void *RtlSdr_Read_Async(void *pid) {
   rtlsdr_read_async(
       dev, RtlSdr_Cb, pid, NUM_ASYNC_BUF, RTLSDR_BUF_LEN );
 
   return( NULL );
-} /* RtlSdr_Read_Async() */
+}
 
-/*-----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* RtlSdr_Set_Center_Freq()
  *
  * Sets the Center Frequency of the RTL-SDR Tuner
  */
-  static BOOLEAN
-RtlSdr_Set_Center_Freq( uint32_t center_freq )
-{
+static bool RtlSdr_Set_Center_Freq(uint32_t center_freq) {
   uint32_t ret;
   char mesg[64];
 
@@ -87,74 +134,70 @@ RtlSdr_Set_Center_Freq( uint32_t center_freq )
   /* Set the Center Frequency of the RTL_SDR Device */
   if( rtlsdr_set_center_freq(dev, center_freq) != SUCCESS )
   {
-    Print_Message( _("Failed to set SDR Frequency"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to set SDR Frequency", ERROR_MESG );
+    return( false );
   }
 
   /* Get the Center Frequency of the RTL_SDR Device */
   ret = rtlsdr_get_center_freq( dev );
   if( (ret != center_freq) || (ret == 0) )
   {
-    Print_Message( _("Failed to set SDR Frequency"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to set SDR Frequency", ERROR_MESG );
+    return( false );
   }
 
   /* Display center frequency in messages */
   snprintf( mesg, sizeof(mesg),
-      _("Set SDR Frequency to %0.1fkHz"),
+      "Set SDR Frequency to %0.1fkHz",
       (double)center_freq / 1000.0 );
   Print_Message( mesg, INFO_MESG );
 
-  return( TRUE );
-} /* RtlSdr_Set_Center_Freq() */
+  return( true );
+}
 
-/*-----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* RtlSdr_Set_Tuner_Gain_Mode()
  *
  * Sets the Tuner Gain mode to Auto or Manual
  */
-  static BOOLEAN
-RtlSdr_Set_Tuner_Gain_Mode( int mode )
-{
+static bool RtlSdr_Set_Tuner_Gain_Mode(int mode) {
   /* Set Tuner Gain Mode */
   int ret = rtlsdr_set_tuner_gain_mode( dev, mode );
   if( ret != SUCCESS )
   {
-    Print_Message( _("Failed to set Tuner Gain Mode"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to set Tuner Gain Mode", ERROR_MESG );
+    return( false );
   }
 
   /* Set RTL2832 Digital AGC */
   if( mode == TUNER_GAIN_AUTO )
   {
-    Print_Message( _("Setting Tuner Gain Mode to Auto"), INFO_MESG );
+    Print_Message( "Setting Tuner Gain Mode to Auto", INFO_MESG );
     mode = 1;
   }
   else
   {
-    Print_Message( _("Setting Tuner Gain Mode to Manual"), INFO_MESG );
+    Print_Message( "Setting Tuner Gain Mode to Manual", INFO_MESG );
     mode = 0;
   }
   ret = rtlsdr_set_agc_mode( dev, mode);
   if( ret != SUCCESS )
   {
-    Print_Message( _("Failed to set RTL2832 Digital AGC"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to set RTL2832 Digital AGC", ERROR_MESG );
+    return( false );
   }
 
-  return( TRUE );
-} /* RtlSdr_Set_Tuner_Gain_Mode() */
+  return( true );
+}
 
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* RtlSdr_Set_Tuner_Gain()
  *
  * Set the Tuner Gain if in Manual mode
  */
-  static BOOLEAN
-RtlSdr_Set_Tuner_Gain( uint32_t gain )
-{
+static bool RtlSdr_Set_Tuner_Gain(uint32_t gain) {
   int
     idx,
     min,
@@ -168,8 +211,8 @@ RtlSdr_Set_Tuner_Gain( uint32_t gain )
   num_gains = rtlsdr_get_tuner_gains( dev, NULL );
   if( num_gains <= 0 )
   {
-    Print_Message( _("Failed to get Tuner Number of Gains"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to get Tuner Number of Gains", ERROR_MESG );
+    return( false );
   }
 
   /* Get the Gains List from the Device */
@@ -177,8 +220,8 @@ RtlSdr_Set_Tuner_Gain( uint32_t gain )
   num_gains = rtlsdr_get_tuner_gains( dev, gains );
   if( num_gains <= 0 )
   {
-    Print_Message( _("Failed to get Tuner Gains Array"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to get Tuner Gains Array", ERROR_MESG );
+    return( false );
   }
 
   /* Scale gain request to range of available gains */
@@ -204,28 +247,26 @@ RtlSdr_Set_Tuner_Gain( uint32_t gain )
   /* Try to set the Tuner Gain */
   char mesg[MESG_SIZE];
   snprintf( mesg, sizeof(mesg),
-      _("Setting Tuner Gain to %ddB"), gains[igx] / 10 );
+      "Setting Tuner Gain to %ddB", gains[igx] / 10 );
   Print_Message( mesg, INFO_MESG );
   int ret = rtlsdr_set_tuner_gain( dev, gains[igx] );
   if( ret != SUCCESS )
   {
-    Print_Message( _("Failed to set Tuner Gain"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to set Tuner Gain", ERROR_MESG );
+    return( false );
   }
   free_ptr( (void **)&gains );
 
-  return( TRUE );
-} /* RtlSdr_Set_Tuner_Gain() */
+  return( true );
+}
 
-/*----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* RtlSdr_Initialize()
  *
  * Initialize rtlsdr device status
  */
-  BOOLEAN
-RtlSdr_Initialize( void )
-{
+bool RtlSdr_Initialize(void) {
   /* rtlsdr device sample rate */
   uint32_t sample_rate;
 
@@ -234,9 +275,9 @@ RtlSdr_Initialize( void )
 
   /* Device USB strings */
   char
-    manufact[256],
-    product[256],
-    serial[256],
+    manufact[128],
+    product[128],
+    serial[128],
     mesg[512];
 
   const char *tuner_types[] = { TUNER_TYPES };
@@ -255,13 +296,13 @@ RtlSdr_Initialize( void )
   ret = rtlsdr_open( &dev, rc_data.rtlsdr_dev_index);
   if( ret != SUCCESS )
   {
-    Print_Message( _("Failed to open RTL-SDR device"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to open RTL-SDR device", ERROR_MESG );
+    return( false );
   }
 
   /* Get RTL Device Name */
-  Print_Message( _("Initializing RTLSDR Device "), INFO_MESG );
-  Print_Message( _("RTLSDR Device Information:"),  INFO_MESG );
+  Print_Message( "Initializing RTLSDR Device ", INFO_MESG );
+  Print_Message( "RTLSDR Device Information:",  INFO_MESG );
   dev_name = rtlsdr_get_device_name( rc_data.rtlsdr_dev_index );
 
   /* Get device USB strings */
@@ -269,14 +310,15 @@ RtlSdr_Initialize( void )
       rc_data.rtlsdr_dev_index, manufact, product, serial );
   if( ret != SUCCESS )
   {
-    Print_Message( _("Failed to get device usb strings"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to get device usb strings", ERROR_MESG );
+    return( false );
   }
 
   /* Display device name and USB strings */
+  /* TODO recheck for possible overflow */
   snprintf( mesg, sizeof(mesg),
-      _("Device Index: %d Name: %s\n"\
-        "Manufacturer: %s Product: %s Serial: %s"),
+      "Device Index: %u Name: %s\n"\
+        "Manufacturer: %s Product: %s Serial: %s",
       rc_data.rtlsdr_dev_index, dev_name, manufact, product, serial );
   Print_Message( mesg, INFO_MESG );
 
@@ -284,16 +326,16 @@ RtlSdr_Initialize( void )
   tuner = rtlsdr_get_tuner_type( dev );
   if( tuner == RTLSDR_TUNER_UNKNOWN )
   {
-    Print_Message( _("Failed to get Tuner type"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to get Tuner type", ERROR_MESG );
+    return( false );
   }
   snprintf( mesg, sizeof(mesg),
-      _("Tuner Type: %s"), tuner_types[tuner] );
+      "Tuner Type: %s", tuner_types[tuner] );
   Print_Message( mesg, INFO_MESG );
 
   /* Set the Center Frequency of the RTL_SDR Device */
   ret = RtlSdr_Set_Center_Freq( rc_data.sdr_center_freq );
-  if( !ret ) return( FALSE );
+  if( !ret ) return( false );
 
   /* Set the Frequency Correction factor for the device */
   if( rc_data.rtlsdr_freq_corr )
@@ -302,38 +344,38 @@ RtlSdr_Initialize( void )
     if( ret != SUCCESS )
     {
       Print_Message(
-          _("Failed to set Frequency Correction factor"), ERROR_MESG );
-      return( FALSE );
+          "Failed to set Frequency Correction factor", ERROR_MESG );
+      return( false );
     }
   }
 
   /* Get the Frequency Correction factor from the device */
   rc_data.rtlsdr_freq_corr = rtlsdr_get_freq_correction( dev );
   snprintf( mesg, sizeof(mesg),
-      _("Frequency Correction: %d ppm"), rc_data.rtlsdr_freq_corr );
+      "Frequency Correction: %d ppm", rc_data.rtlsdr_freq_corr );
   Print_Message( mesg, INFO_MESG );
 
   /* Set Tuner Gain Mode to Auto */
   if( rc_data.tuner_gain == 0 )
   {
     if( !RtlSdr_Set_Tuner_Gain_Mode(TUNER_GAIN_AUTO) )
-      return( FALSE );
+      return( false );
   }
   else
   {
     /* Set Tuner Gain Mode to Manual */
     if( !RtlSdr_Set_Tuner_Gain_Mode(TUNER_GAIN_MANUAL) )
-      return( FALSE );
+      return( false );
     if( !RtlSdr_Set_Tuner_Gain(rc_data.tuner_gain) )
-      return( FALSE );
+      return( false );
   }
 
   /* Set RTL Sample Rate */
   ret = rtlsdr_set_sample_rate( dev, rc_data.sdr_samplerate );
   if( (ret != SUCCESS) || (ret == -EINVAL) )
   {
-    Print_Message( _("Failed to set ADC Sample Rate"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to set ADC Sample Rate", ERROR_MESG );
+    return( false );
   }
 
   /* Demodulator effective sample rate */
@@ -343,19 +385,19 @@ RtlSdr_Initialize( void )
   sample_rate = rtlsdr_get_sample_rate( dev );
   if( sample_rate == 0 )
   {
-    Print_Message( _("Failed to get ADC Sample Rate"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to get ADC Sample Rate", ERROR_MESG );
+    return( false );
   }
   snprintf( mesg, sizeof(mesg),
-      _("ADC Sample Rate: %d S/s"), sample_rate );
+      "ADC Sample Rate: %u S/s", sample_rate );
   Print_Message( mesg, INFO_MESG );
 
   /* Reset RTL data buffer */
   ret = rtlsdr_reset_buffer( dev );
   if( ret != SUCCESS )
   {
-    Print_Message( _("Failed to Reset sampling Buffer"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to Reset sampling Buffer", ERROR_MESG );
+    return( false );
   }
 
   /* Allocate I/Q data buffers */
@@ -390,33 +432,27 @@ RtlSdr_Initialize( void )
   ret = pthread_create( &pthread_id, NULL, RtlSdr_Read_Async, NULL );
   if( ret != SUCCESS )
   {
-    Print_Message( _("Failed to create async read thread"), ERROR_MESG );
-    return( FALSE );
+    Print_Message( "Failed to create async read thread", ERROR_MESG );
+    return( false );
   }
   sleep( 1 );
 
-  Print_Message( _("RTLSDR Device Initialized OK"), INFO_MESG );
+  Print_Message( "RTLSDR Device Initialized OK", INFO_MESG );
 
-  return( TRUE );
-} /* RtlSdr_Initialize() */
+  return( true );
+}
 
-/*-----------------------------------------------------------------------*/
+/*****************************************************************************/
 
 /* RtlSdr_Close_Device()
  *
  * Closes thr RTL-SDR device, if open
  */
-  void
-RtlSdr_Close_Device( void )
-{
+void RtlSdr_Close_Device(void) {
   if( dev != NULL )
   {
     rtlsdr_cancel_async( dev );
     rtlsdr_close( dev );
     dev = NULL;
   }
-
-} /* RtlSdr_Close_Device() */
-
-/*-----------------------------------------------------------------------*/
-
+}

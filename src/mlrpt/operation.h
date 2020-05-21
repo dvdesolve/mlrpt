@@ -14,8 +14,8 @@
 
 /*****************************************************************************/
 
-#ifndef SDR_AIRSPY_H
-#define SDR_AIRSPY_H
+#ifndef MLRPT_OPERATION_H
+#define MLRPT_OPERATION_H
 
 /*****************************************************************************/
 
@@ -23,8 +23,10 @@
 
 /*****************************************************************************/
 
-bool Airspy_Initialize(void);
-void Airspy_Close_Device(void);
+bool Start_Receiver(void);
+void Alarm_Action(void);
+void Oper_Timer_Setup(char *arg);
+void Auto_Timer_Setup(char *arg);
 
 /*****************************************************************************/
 

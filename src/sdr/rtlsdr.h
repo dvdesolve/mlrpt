@@ -12,35 +12,20 @@
  *  http://www.gnu.org/copyleft/gpl.txt
  */
 
-#ifndef RTLSDR_H
-#define RTLSDR_H    1
+/*****************************************************************************/
 
-#include "../common/common.h"
+#ifndef SDR_RTLSDR_H
+#define SDR_RTLSDR_H
 
-/* Length of RTL-SDR I/Q buffer length */
-#define RTLSDR_BUF_LEN  65536
+/*****************************************************************************/
 
-/* Settings for various rtlsdr functions */
-#define TUNER_GAIN_MANUAL   1
-#define TUNER_GAIN_AUTO     0
-#define RTL_DAGC_ON         1
-#define RTL_DAGC_OFF        0
-#define AGC_SCALE_RANGE     100
+#include <stdbool.h>
 
-/* These are actually the default settings of
- * rtlsdr_read_async() but I need them to define
- * the size of the working samples_buf, which must
- * be the same as the async buffers */
-#define NUM_ASYNC_BUF   15
+/*****************************************************************************/
 
-#define TUNER_TYPES \
-  "UNKNOWN", \
-  "E4000", \
-  "FC0012", \
-  "FC0013", \
-  "FC2580", \
-  "R820T", \
-  "R828D"
+bool RtlSdr_Initialize(void);
+void RtlSdr_Close_Device(void);
+
+/*****************************************************************************/
 
 #endif
-

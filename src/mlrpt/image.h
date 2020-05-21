@@ -14,17 +14,38 @@
 
 /*****************************************************************************/
 
-#ifndef SDR_AIRSPY_H
-#define SDR_AIRSPY_H
+#ifndef MLRPT_IMAGE_H
+#define MLRPT_IMAGE_H
 
 /*****************************************************************************/
 
-#include <stdbool.h>
+#include <stdint.h>
 
 /*****************************************************************************/
 
-bool Airspy_Initialize(void);
-void Airspy_Close_Device(void);
+/* Normalized black value */
+#define NORM_BLACK  0
+
+/* Min and max values required in histogram normalization to leave behind
+ * occasional black bands in images
+ */
+#define MIN_BLACK   2
+#define MAX_WHITE   255
+
+/* TODO seems like unused */
+/* Minimum black value in blue APID image */
+#define BLUE_MIN_BLACK  64
+
+/*****************************************************************************/
+
+void Normalize_Image(
+        uint8_t *image_buffer,
+        uint32_t image_size,
+        uint8_t range_low,
+        uint8_t range_high);
+void Flip_Image(uint8_t *image_buffer, uint32_t image_size);
+void Display_Scaled_Image(uint8_t *chan_image[], uint32_t apid, int current_y);
+void Create_Combo_Image(uint8_t *combo_image);
 
 /*****************************************************************************/
 

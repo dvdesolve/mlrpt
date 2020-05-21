@@ -14,17 +14,12 @@
 
 /*****************************************************************************/
 
-#ifndef SDR_AIRSPY_H
-#define SDR_AIRSPY_H
+#ifndef DECODER_RECTIFY_METEOR_H
+#define DECODER_RECTIFY_METEOR_H
 
 /*****************************************************************************/
 
-#include <stdbool.h>
-
-/*****************************************************************************/
-
-bool Airspy_Initialize(void);
-void Airspy_Close_Device(void);
+void Rectify_Images(void);
 
 /*****************************************************************************/
 
