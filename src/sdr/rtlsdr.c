@@ -85,6 +85,21 @@ static uint8_t buf_cnt;
 static void RtlSdr_Cb(unsigned char *buf, uint32_t len, void *ctx) {
   uint32_t ids = 0, idx = 0;
 
+  /* DEBUG */
+  /* Writes IQ samples to file, for testing only
+  {
+    static FILE *fp = NULL;
+    if( fp == NULL ) fp = fopen( "raw.s", "w" );
+    fwrite( buf, sizeof(uint8_t), (size_t)len, fp );
+  } */
+
+  /* Reads IQ samples from file, for testing only
+  {
+    static FILE *fp = NULL;
+    if( fp == NULL ) fp = fopen( "raw.s", "r" );
+    fread( buf, sizeof(uint8_t), (size_t)len, fp );
+  } */
+
   /* Convert sample values to range of int8_t */
   while( idx < len )
   {
@@ -94,6 +109,17 @@ static void RtlSdr_Cb(unsigned char *buf, uint32_t len, void *ctx) {
     idx++;
     ids++;
   }
+
+  /* DEBUG - old and non-workable! */
+  /*static FILE *fdi = NULL, *fdq = NULL;
+
+  if (fdi == NULL)
+      fdi = fopen("i.s", "r");
+  if (fdq == NULL)
+      fdq = fopen("q.s", "r");
+
+  fread(buf_i[buf_cnt], sizeof(double), (size_t)(RTLSDR_BUF_LEN / 2), fdi);
+  fread(buf_q[buf_cnt], sizeof(double), (size_t)(RTLSDR_BUF_LEN / 2), fdq);*/
 
   /* Link low pass filter I and Q data to local buffers */
   filter_data_i.samples_buf = buf_i[buf_cnt];
