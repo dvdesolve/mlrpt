@@ -6,7 +6,7 @@
 `mlrpt` currently supports [RTL-SDR](https://www.rtl-sdr.com/buy-rtl-sdr-dvb-t-dongles/), [Airspy Mini](https://airspy.com/airspy-mini) and [Airspy R2](https://airspy.com/airspy-r2) dongles only.
 
 ### Software
-In order to use `mlrpt` you should have `librtlsdr` and/or `libairspy` installed on your system.
+In order to use `mlrpt` you should have `librtlsdr` and `libairspy` installed on your system. Also be sure that you have `libjpeg-turbo` installed too.
 
 To build `mlrpt` be sure to have the following dependencies installed:
 - `gcc` (4.8 or higher)
