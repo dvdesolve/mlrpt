@@ -14,7 +14,7 @@
 
 # global settings
 cmake_minimum_required(VERSION 3.12)
-project(mlrpt VERSION 1.7.0 LANGUAGES C)
+project(mlrpt VERSION 1.8.0 LANGUAGES C)
 
 
 # use FHS

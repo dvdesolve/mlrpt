@@ -20,7 +20,6 @@
 #include "../common/shared.h"
 #include "../mlrpt/clahe.h"
 #include "../mlrpt/image.h"
-#include "../mlrpt/jpeg.h"
 #include "../mlrpt/utils.h"
 #include "bitop.h"
 #include "dct.h"
@@ -35,13 +34,6 @@
 /*****************************************************************************/
 
 #define MCU_PER_PACKET  14
-
-/*****************************************************************************/
-
-enum {
-    GREYSCALE_CHAN = 1,
-    COLORIZED_CHAN = 3
-};
 
 /*****************************************************************************/
 
@@ -115,25 +107,17 @@ static void Save_Images(int type) {
       /* Save channel images as JPEG */
       if( isFlagSet(IMAGE_SAVE_JPEG) )
       {
-        /* Set compression parameters */
-        compression_params_t comp_params;
-        bool ret = jpeg_encoder_compression_parameters(
-            &comp_params, rc_data.jpeg_quality, Y_ONLY, true );
-        if (!ret)
-          Print_Message( "Bad compression parameters", ERROR_MESG );
-
         /* Save unprocessed image */
         fname[0] = '\0';
         if( type == IMAGE_RAW )
           File_Name( fname, idx, "-raw.jpg" );
         else
           File_Name( fname, idx, ".jpg" );
-        Save_Image_JPEG( fname,
+        Save_Image_JPEG(fname,
             (int)channel_image_width,
             (int)channel_image_height,
-            GREYSCALE_CHAN,
-            channel_image[idx],
-            &comp_params );
+            true,
+            channel_image[idx]);
       }
 
     } /* for( idx = 0; idx < CHANNEL_IMAGE_NUM; idx++ ) */
@@ -164,24 +148,17 @@ static void Save_Images(int type) {
     /* Save combo image as JPEG */
     if( isFlagSet(IMAGE_SAVE_JPEG) )
     {
-      /* Set compression parameters */
-      compression_params_t comp_params;
-      bool ret = jpeg_encoder_compression_parameters(
-          &comp_params, rc_data.jpeg_quality, H2V2, false );
-      if (!ret)
-          Print_Message( "Bad compression parameters", ERROR_MESG );
-
       /* Save unprocessed image */
       fname[0] = '\0';
       if( type == IMAGE_RAW )
         File_Name( fname, COMBO, "-raw.jpg" );
       else
         File_Name( fname, COMBO, ".jpg" );
-      Save_Image_JPEG( fname,
+      Save_Image_JPEG(fname,
           (int)channel_image_width,
           (int)channel_image_height,
-          COLORIZED_CHAN, combo_image,
-          &comp_params );
+          false,
+          combo_image);
     }
 
     free_ptr( (void **)&combo_image );
@@ -192,7 +169,6 @@ static void Save_Images(int type) {
 
 void Mj_Dump_Image(void) {
   uint32_t idx;
-
 
   /* Abort if no images successfully decoded */
   if (channel_image_size == 0)
@@ -301,7 +277,6 @@ static bool Progress_Image(uint32_t apid, int mcu_id, int pck_cnt) {
   size_t delta_len = 0, i, s;
   int j;
 
-
   if( (apid == 0) || (apid == 70) )
     return false;
 
@@ -355,7 +330,6 @@ void Mj_Dec_Mcus(
         int pck_cnt,
         int mcu_id,
         uint8_t q) {
-
   bit_io_rec_t b;
   int i, m;
   uint16_t k, n;
@@ -385,8 +359,8 @@ void Mj_Dec_Mcus(
       Print_Message( "Decoder: bad DC huffman code!", ERROR_MESG );
       return;
     }
-    Bitop_AdvanceNBits( &b, dc_cat_off[dc_cat] );
-    n = (uint16_t)(Bitop_FetchNBits( &b, dc_cat ));
+    Bitop_AdvanceNBits(&b, dc_cat_off[dc_cat]);
+    n = (uint16_t)(Bitop_FetchNBits(&b, dc_cat));
 
     zdct[0] = Map_Range( dc_cat, n ) + prev_dc;
     prev_dc = zdct[0];
@@ -403,7 +377,7 @@ void Mj_Dec_Mcus(
       ac_len  = ac_table[ac].len;
       ac_size = ac_table[ac].size;
       ac_run  = ac_table[ac].run;
-      Bitop_AdvanceNBits( &b, ac_len );
+      Bitop_AdvanceNBits(&b, ac_len);
 
       if( (ac_run == 0) && (ac_size == 0) )
       {
@@ -419,7 +393,7 @@ void Mj_Dec_Mcus(
 
       if( ac_size != 0 )
       {
-        n = (uint16_t)(Bitop_FetchNBits( &b, ac_size ));
+        n = (uint16_t)(Bitop_FetchNBits(&b, ac_size));
         zdct[k] = Map_Range( ac_size, n );
         k++;
       }
