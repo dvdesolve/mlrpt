@@ -183,12 +183,9 @@ static const char *Filename(const char *fpath) {
  */
 void Usage(void) {
   fprintf( stderr,
-      "Usage:  mlrpt -[c <config-file> r <algorithm> f <frequency> s <HHMM-HHMM> t <min> -qihv]\n"
+      "Usage:  mlrpt -[c <config-file> s <HHMM-HHMM> -qihv]\n"
         "       -c: configuration file\n"
-        "       -f: SDR receiver frequency (in kHz)\n"
-        "       -r: image rectification algorithm: 0 = none, 1 = W2RG, 2 = 5B4AZ\n"
         "       -s: start and stop operation time in HHMM format\n"
-        "       -t: operation duration in minutes\n"
         "       -q: run in quiet mode (no messages printed)\n"
         "       -i: flip images (useful for South to North passes)\n"
         "       -h: print this usage information and exit\n"
