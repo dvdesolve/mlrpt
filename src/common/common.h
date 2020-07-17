@@ -41,6 +41,11 @@
 #define IMAGE_SAVE_PPGM         0x002000 /* Save channel image as PGM|PPM */
 #define IMAGE_RECTIFY           0x004000 /* Images have been rectified */
 #define VERBOSE_MODE            0x008000 /* Run verbose (print messages)  */
+#define STATUS_RECEIVING        0x010000 /* SDR receiver running or not     */
+#define STATUS_STREAMING        0x020000 /* SDR receiver streaming or not   */
+#define STATUS_SOAPYSDR_INIT    0x040000 /* SoapySDR device init status     */
+#define TUNER_GAIN_AUTO         0x100000 /* Set tuner gain to auto mode     */
+#define AUTO_DETECT_SDR         0x200000 /* Auto detect SDR device & driver */
 
 /* Number of APID image channels */
 #define CHANNEL_IMAGE_NUM   3
@@ -55,9 +60,6 @@
 
 /* Size of char arrays (strings) for text messages */
 #define MESG_SIZE   512
-
-/* Maximum time duration in sec of satellite signal processing */
-#define MAX_OPERATION_TIME  1000
 
 /* Neoklis Kyriazis' addition, width (in pixels) of image
  * METEOR_IMAGE_WIDTH = MCU_PER_LINE * 8; MCU_PER_LINE = 196
@@ -83,18 +85,6 @@
 
 /*****************************************************************************/
 
-/* SDR receiver types */
-enum {
-    SDR_TYPE_RTLSDR = 1,
-    SDR_TYPE_AIRSPY,
-    SDR_TYPE_NUM
-};
-
-enum {
-    INIT_BWORTH_LPF = 1,
-    RTL_DAGC_ENABLE
-};
-
 /* Filter types */
 enum {
     FILTER_LOWPASS = 1,
@@ -107,28 +97,6 @@ enum {
     RED = 0,
     GREEN,
     BLUE
-};
-
-/* Flags to select images for output */
-enum {
-    OUT_COMBO = 1,
-    OUT_SPLIT,
-    OUT_BOTH
-};
-
-/* Flags to indicate image file type to save as */
-enum {
-    SAVEAS_JPEG = 1,
-    SAVEAS_PGM,
-    SAVEAS_BOTH
-};
-
-/* Flags to indicate images to be saved */
-enum {
-    CH0 = 0,
-    CH1,
-    CH2,
-    COMBO
 };
 
 /* Message types */

@@ -2,9 +2,9 @@
 find_package(PkgConfig REQUIRED)
 
 find_package(Threads)
-pkg_check_modules(RTLSDR REQUIRED librtlsdr)
-pkg_check_modules(AIRSPY REQUIRED libairspy)
+pkg_check_modules(SOAPYSDR REQUIRED SoapySDR)
 pkg_check_modules(TURBOJPEG REQUIRED libturbojpeg)
+pkg_check_modules(LIBCONFIG REQUIRED libconfig)
 
 
 # sources
@@ -32,9 +32,8 @@ set(mlrpt_SOURCES
     mlrpt/operation.c
     mlrpt/rc_config.c
     mlrpt/utils.c
-    sdr/airspy.c
     sdr/filters.c
-    sdr/rtlsdr.c)
+    sdr/SoapySDR.c)
 
 set(mlrpt_HEADERS
     common/common.h
@@ -60,9 +59,8 @@ set(mlrpt_HEADERS
     mlrpt/operation.h
     mlrpt/rc_config.h
     mlrpt/utils.h
-    sdr/airspy.h
     sdr/filters.h
-    sdr/rtlsdr.h)
+    sdr/SoapySDR.h)
 
 
 # primary and the only target
@@ -83,23 +81,23 @@ target_compile_options(mlrpt PRIVATE -fstack-protector-strong)
 
 
 # where our includes reside
-target_include_directories(mlrpt SYSTEM PRIVATE ${AIRSPY_INCLUDE_DIRS})
-target_include_directories(mlrpt SYSTEM PRIVATE ${RTLSDR_INCLUDE_DIRS})
+target_include_directories(mlrpt SYSTEM PRIVATE ${SOAPYSDR_INCLUDE_DIRS})
 target_include_directories(mlrpt SYSTEM PRIVATE ${TURBOJPEG_INCLUDE_DIRS})
+target_include_directories(mlrpt SYSTEM PRIVATE ${LIBCONFIG_INCLUDE_DIRS})
 
 
 # where to find external libraries
-target_link_directories(mlrpt PRIVATE ${AIRSPY_LIBRARY_DIRS})
-target_link_directories(mlrpt PRIVATE ${RTLSDR_LIBRARY_DIRS})
+target_link_directories(mlrpt PRIVATE ${SOAPYSDR_LIBRARY_DIRS})
 target_link_directories(mlrpt PRIVATE ${TURBOJPEG_LIBRARY_DIRS})
+target_link_directories(mlrpt PRIVATE ${LIBCONFIG_LIBRARY_DIRS})
 
 
 # link libraries
 target_link_libraries(mlrpt PRIVATE m)
 target_link_libraries(mlrpt PRIVATE ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(mlrpt PRIVATE ${AIRSPY_LIBRARIES})
-target_link_libraries(mlrpt PRIVATE ${RTLSDR_LIBRARIES})
+target_link_libraries(mlrpt PRIVATE ${SOAPYSDR_LIBRARIES})
 target_link_libraries(mlrpt PRIVATE ${TURBOJPEG_LIBRARIES})
+target_link_libraries(mlrpt PRIVATE ${LIBCONFIG_LIBRARIES})
 
 
 # GNU11 standard

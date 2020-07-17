@@ -22,6 +22,7 @@
 #include "../decoder/met_jpg.h"
 #include "../decoder/met_to_data.h"
 #include "../mlrpt/utils.h"
+#include "../sdr/SoapySDR.h"
 #include "agc.h"
 #include "doqpsk.h"
 /*
@@ -401,10 +402,10 @@ void Demod_Init(void) {
   /* Initialize the timing recovery variables */
   demodulator->sym_rate   = rc_data.symbol_rate;
   demodulator->sym_period = (double)rc_data.interp_factor *
-    rc_data.demod_samplerate / (double)rc_data.symbol_rate;
+    demod_samplerate / (double)rc_data.symbol_rate;
 
   /* Initialize RRC filter */
-  double osf = rc_data.demod_samplerate / (double)rc_data.symbol_rate;
+  double osf = demod_samplerate / (double)rc_data.symbol_rate;
   demodulator->rrc = Filter_RRC(
       rc_data.rrc_order, rc_data.interp_factor, osf, rc_data.rrc_alpha );
 

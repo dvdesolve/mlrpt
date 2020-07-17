@@ -25,7 +25,6 @@
 
 bool Start_Receiver(void);
 void Alarm_Action(void);
-void Oper_Timer_Setup(char *arg);
 void Auto_Timer_Setup(char *arg);
 
 /*****************************************************************************/

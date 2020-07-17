@@ -14,17 +14,25 @@
 
 /*****************************************************************************/
 
-#ifndef SDR_AIRSPY_H
-#define SDR_AIRSPY_H
+#ifndef SDR_SOAPYSDR_H
+#define SDR_SOAPYSDR_H
 
 /*****************************************************************************/
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /*****************************************************************************/
 
-bool Airspy_Initialize(void);
-void Airspy_Close_Device(void);
+extern double demod_samplerate;
+
+/*****************************************************************************/
+
+bool SoapySDR_Set_Center_Freq(uint32_t center_freq);
+void SoapySDR_Set_Tuner_Gain_Mode(void);
+void SoapySDR_Set_Tuner_Gain(double gain);
+bool SoapySDR_Init(void);
+bool SoapySDR_Activate_Stream(void);
 
 /*****************************************************************************/
 

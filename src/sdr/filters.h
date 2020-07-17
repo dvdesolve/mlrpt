@@ -58,11 +58,12 @@ bool Init_Chebyshev_Filter(
         filter_data_t *filter_data,
         uint32_t buf_len,
         uint32_t filter_bw,
-        uint32_t sample_rate,
+        double sample_rate,
         double ripple,
         uint32_t num_poles,
         uint32_t type);
 void DSP_Filter(filter_data_t *filter_data);
+void Deinit_Chebyshev_Filter(filter_data_t *data);
 
 /*****************************************************************************/
 

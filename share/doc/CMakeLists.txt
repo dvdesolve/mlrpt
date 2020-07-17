@@ -14,3 +14,5 @@
 
 # install
 install(FILES mlrpt.1.gz DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+install(FILES rectify-calcs.txt DESTINATION ${CMAKE_INSTALL_DOCDIR})
+install(FILES rectify-geometry.png DESTINATION ${CMAKE_INSTALL_DOCDIR})

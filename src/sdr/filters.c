@@ -36,7 +36,7 @@ bool Init_Chebyshev_Filter(
         filter_data_t *filter_data,
         uint32_t buf_len,
         uint32_t filter_bw,
-        uint32_t sample_rate,
+        double sample_rate,
         double ripple,
         uint32_t num_poles,
         uint32_t type) {
@@ -49,7 +49,7 @@ bool Init_Chebyshev_Filter(
 
   /* Initialize filter parameters */
   filter_data->cutoff   = (double)(filter_bw / 2);
-  filter_data->cutoff  /= (double)sample_rate;
+  filter_data->cutoff  /= sample_rate;
   filter_data->ripple   = ripple;
   filter_data->npoles   = num_poles;
   filter_data->type     = type;
@@ -248,4 +248,17 @@ void DSP_Filter(filter_data_t *filter_data) {
     filter_data->samples_buf[buf_idx] = yn0;
 
   } /* for( buf_idx = 0; buf_idx < len; buf_idx++ ) */
+}
+
+/*****************************************************************************/
+
+/* Deinit_Chebyshev_Filter()
+ *
+ * Deinitializes Chebyshev filter (free's allocations)
+ */
+void Deinit_Chebyshev_Filter(filter_data_t *data) {
+  free_ptr( (void **)&(data->a) );
+  free_ptr( (void **)&(data->b) );
+  free_ptr( (void **)&(data->x) );
+  free_ptr( (void **)&(data->y) );
 }

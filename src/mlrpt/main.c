@@ -23,170 +23,163 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /*****************************************************************************/
 
-/* Signal handler */
 static void sig_handler(int signal);
 
 /*****************************************************************************/
 
 int main(int argc, char *argv[]) {
-  /* Find and prepare program directories */
-  if (!PrepareCacheDirectory()) {
-    fprintf(stderr, "mlrpt: %s\n", "error during preparing cache directory");
-    exit(-1);
-  }
+    /* New and old actions for sigaction routine */
+    struct sigaction sa_new, sa_old;
 
-  /* Command line option returned by getopt() */
-  int option;
+    /* Initialize new actions */
+    sa_new.sa_handler = sig_handler;
+    sigemptyset(&sa_new.sa_mask);
+    sa_new.sa_flags = 0;
 
-  /* New and old actions for sigaction() */
-  struct sigaction sa_new, sa_old;
+    /* Register function to handle signals */
+    sigaction(SIGINT,  &sa_new, &sa_old);
+    sigaction(SIGSEGV, &sa_new, 0);
+    sigaction(SIGFPE,  &sa_new, 0);
+    sigaction(SIGTERM, &sa_new, 0);
+    sigaction(SIGABRT, &sa_new, 0);
+    sigaction(SIGCONT, &sa_new, 0);
+    sigaction(SIGALRM, &sa_new, 0);
 
+    /* Defaults/initialization */
+    SetFlag(VERBOSE_MODE);
+    rc_data.decode_timer = 0;
+    snprintf(mlrpt_cfg, sizeof(mlrpt_cfg),
+            "%s/.mlrptrc", getenv("HOME"));
 
-  /* Initialize new actions */
-  sa_new.sa_handler = sig_handler;
-  sigemptyset( &sa_new.sa_mask );
-  sa_new.sa_flags = 0;
+    /* Process command line options */
+    int option;
 
-  /* Register function to handle signals */
-  sigaction( SIGINT,  &sa_new, &sa_old );
-  sigaction( SIGSEGV, &sa_new, 0 );
-  sigaction( SIGFPE,  &sa_new, 0 );
-  sigaction( SIGTERM, &sa_new, 0 );
-  sigaction( SIGABRT, &sa_new, 0 );
-  sigaction( SIGCONT, &sa_new, 0 );
-  sigaction( SIGALRM, &sa_new, 0 );
+    while ((option = getopt(argc, argv, "c:s:qhiv")) != -1)
+        switch (option) {
+            case 'c': /* User-supplied config */
+                strncpy(mlrpt_cfg, optarg, PATH_MAX + 1);
 
-  /* Defaults/initialization */
-  SetFlag( VERBOSE_MODE );
+                break;
 
-  /* Process command line options */
-  rc_data.sdr_center_freq  = 0;
-  rc_data.operation_time   = 0;
-  rc_data.rectify_function = 0;
+            case 's': /* Start and stop times as HHMM-HHMM in UTC */
+                Auto_Timer_Setup(optarg);
+                pause(); /* Pause here till start time */
 
-  /* Default config file */
-  /* TODO recheck length */
-  snprintf(rc_data.mlrpt_cfg, sizeof(rc_data.mlrpt_cfg),
-              "%s/.mlrptrc", getenv("HOME"));
+                break;
 
-  while( (option = getopt(argc, argv, "c:f:r:s:t:qhiv") ) != -1 )
-    switch( option )
-    {
-      case 'c': /* Config file name */
-        /* TODO recheck length */
-        snprintf(rc_data.mlrpt_cfg, sizeof(rc_data.mlrpt_cfg),
-              "%s", optarg);
-        break;
+            case 'q': /* Disable verbose output */
+                ClearFlag(VERBOSE_MODE);
 
-      case 'f': /* Receiver frequency in kHz */
-        {
-          double freq = atof( optarg ) * 1000.0;
-          rc_data.sdr_center_freq = (uint32_t)freq;
+                break;
+
+            case 'h': /* Print help and exit */
+                Usage();
+                exit(0);
+
+                break;
+
+            /* TODO should be renamed to not mess up our users (use flip instead) */
+            case 'i': /* Enable image flipping (invert images) */
+                SetFlag(IMAGE_INVERT);
+
+                break;
+
+            case 'v': /* Print version info and exit */
+                puts(PACKAGE_STRING);
+                exit(0);
+
+                break;
+
+            default: /* Print help and exit */
+                Usage();
+                exit(-1);
+
+                break;
         }
-        break;
 
-      case 's': /* Start and Stop times as hhmm-hhmm in UTC */
-        Auto_Timer_Setup( optarg );
-        pause(); /* Flow pauses here till start time */
-        break;
-
-      case 'r': /* Start and Stop times as hhmm-hhmm in UTC */
-        rc_data.rectify_function = (uint8_t)atoi( optarg );
-        break;
-
-      case 't': /* Operation timer in min */
-        Oper_Timer_Setup( optarg );
-        break;
-
-      case 'q': /* Disable running verbose */
-        ClearFlag( VERBOSE_MODE );
-        break;
-
-      case 'h': /* Print usage and exit */
-        Usage();
-        exit(0);
-
-      case 'i': /* Enable image flipping (invert images) */
-        SetFlag( IMAGE_INVERT );
-        break;
-
-      case 'v': /* Print version  and exit*/
-        puts( PACKAGE_STRING );
-        exit(0);
-
-      default: /* Print usage and exit */
-        Usage();
+    /* Prepare program cache directory */
+    if (!prepareCacheDirectory()) {
+        fprintf(stderr, "mlrpt: %s\n", "error during preparing cache directory");
         exit(-1);
-    } /* End of switch( option ) */
- 
-  /* Load configuration data from mlrptrc */
-  if( !Load_Config() )
-  {
-    Print_Message(
-        "Failed to read mlrptrc configuration file - exiting",
-        ERROR_MESG );
-    exit( -1 );
-  }
- 
-  /* Start receiver and decoder */
-  if( !Start_Receiver() )
-  {
-    Print_Message(
-        "Failed to start Receiver and Decoder - exiting",
-        ERROR_MESG );
-    exit( -1 );
-  }
+    }
 
-  return( 0 );
+    /* Load configuration data */
+    if (!loadConfig()) {
+        Print_Message("Failed to load mlrpt configuration - exiting",
+                ERROR_MESG);
+        exit(-1);
+    }
+
+    /* Start receiver and decoder */
+    /* TODO need more accurate names */
+    if (!Start_Receiver()) {
+        Print_Message("Failed to start Receiver and Decoder - exiting",
+                ERROR_MESG);
+        exit(-1);
+    }
+
+    return 0;
 }
 
 /*****************************************************************************/
 
-/*  sig_handler()
+/* sig_handler()
  *
- *  Signal Action Handler function
+ * Signal action handler function
  */
+static void sig_handler(int signal) {
+    if (signal == SIGALRM) {
+        Alarm_Action();
 
-static void sig_handler( int signal )
-{
-  if( signal == SIGALRM )
-  {
-    Alarm_Action();
-    return;
-  }
+        return;
+    }
 
-  /* Internal wakeup call */
-  if( signal == SIGCONT ) return;
+    /* Internal wakeup call */
+    if (signal == SIGCONT) return;
 
-  fprintf( stderr, "\n" );
-  switch( signal )
-  {
-    case SIGINT:
-      Print_Message( "Exiting via User Interrupt", ERROR_MESG );
-      if( rc_data.psk_mode == IDOQPSK )
-        SetFlag( ACTION_IDOQPSK_STOP );
-      else
-        ClearFlag( ACTION_FLAGS_ALL );
-      return;
+    ClearFlag(STATUS_RECEIVING);
+    fprintf(stderr, "\n");
 
-    case SIGSEGV:
-      Print_Message( "Segmentation Fault - exiting", ERROR_MESG );
-      exit( -1 );
+    switch (signal) {
+        case SIGINT:
+            Print_Message("Exiting via User Interrupt", ERROR_MESG);
 
-    case SIGFPE:
-      Print_Message( "Floating Point Exception - exiting", ERROR_MESG );
-      exit( -1 );
+            if (rc_data.psk_mode == IDOQPSK)
+                SetFlag(ACTION_IDOQPSK_STOP);
+            else
+                ClearFlag(ACTION_FLAGS_ALL);
 
-    case SIGABRT:
-      Print_Message( "Abort Signal received - exiting", ERROR_MESG );
-      exit( -1 );
+            return;
 
-    case SIGTERM:
-      Print_Message( "Termination Request received - exiting", ERROR_MESG );
-      exit( -1 );
-  }
+            break;
+
+        case SIGSEGV:
+            Print_Message("Segmentation Fault - exiting", ERROR_MESG);
+            exit(-1);
+
+            break;
+
+        case SIGFPE:
+            Print_Message("Floating Point Exception - exiting", ERROR_MESG);
+            exit(-1);
+
+            break;
+
+        case SIGABRT:
+            Print_Message("Abort Signal received - exiting", ERROR_MESG);
+            exit(-1);
+
+            break;
+
+        case SIGTERM:
+            Print_Message("Termination Request received - exiting", ERROR_MESG);
+            exit(-1);
+
+            break;
+    }
 }

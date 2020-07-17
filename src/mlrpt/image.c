@@ -168,6 +168,10 @@ void Create_Combo_Image(uint8_t *combo_image) {
      * but it all depends on the APID options in mlrptrc */
     uint32_t idx = 0, cnt;
     uint8_t range_red, range_green, range_blue;
+    uint8_t
+        red   = rc_data.color_channel[RED],
+        green = rc_data.color_channel[GREEN],
+        blue  = rc_data.color_channel[BLUE];
 
     /* Perform speculative enhancement of watery areas and clouds */
     if( isFlagSet(IMAGE_COLORIZE) )
@@ -193,29 +197,29 @@ void Create_Combo_Image(uint8_t *combo_image) {
              * pixels in the dark areas to counteract the 
              * effects of histogram equalization, which darkens
              * the parts of the image that are watery areas */
-            if( channel_image[BLUE][cnt] < rc_data.colorize_blue_min )
+            if( channel_image[blue][cnt] < rc_data.colorize_blue_min )
             {
-                channel_image[BLUE][cnt] =
+                channel_image[blue][cnt] =
                     rc_data.colorize_blue_min +
-                    ( channel_image[BLUE][cnt] * range_blue ) /
+                    ( channel_image[blue][cnt] * range_blue ) /
                     rc_data.colorize_blue_max;
             }
 
             /* Colorize cloudy areas white pseudocolor. This helps
              * because the red channel does not render clouds right */
-            if( channel_image[BLUE][cnt] > rc_data.clouds_threshold )
+            if( channel_image[blue][cnt] > rc_data.clouds_threshold )
             {
-                combo_image[idx++] = channel_image[BLUE][cnt];
-                combo_image[idx++] = channel_image[BLUE][cnt];
-                combo_image[idx++] = channel_image[BLUE][cnt];
+                combo_image[idx++] = channel_image[blue][cnt];
+                combo_image[idx++] = channel_image[blue][cnt];
+                combo_image[idx++] = channel_image[blue][cnt];
             }
             else /* Just combine channels */
             {
                 /* Reduce Red channel luminance as specified in config file */
                 combo_image[idx++] = rc_data.norm_range[RED][NORM_RANGE_BLACK] +
-                    ( channel_image[RED][cnt] * range_red ) / MAX_WHITE;
-                combo_image[idx++] = channel_image[GREEN][cnt];
-                combo_image[idx++] = channel_image[BLUE][cnt];
+                    ( channel_image[red][cnt] * range_red ) / MAX_WHITE;
+                combo_image[idx++] = channel_image[green][cnt];
+                combo_image[idx++] = channel_image[blue][cnt];
             }
         } /* for( cnt = 0; cnt < (int)channel_image_size; cnt++ ) */
 
@@ -237,11 +241,11 @@ void Create_Combo_Image(uint8_t *combo_image) {
         for( cnt = 0; cnt < channel_image_size; cnt++ )
         {
             combo_image[idx++] = rc_data.norm_range[RED][NORM_RANGE_BLACK] +
-                ( channel_image[RED][cnt] * range_red ) / MAX_WHITE;
+                ( channel_image[red][cnt] * range_red ) / MAX_WHITE;
             combo_image[idx++] = rc_data.norm_range[GREEN][NORM_RANGE_BLACK] +
-                ( channel_image[GREEN][cnt] * range_green ) / MAX_WHITE;
+                ( channel_image[green][cnt] * range_green ) / MAX_WHITE;
             combo_image[idx++] = rc_data.norm_range[BLUE][NORM_RANGE_BLACK] +
-                ( channel_image[BLUE][cnt] * range_blue ) / MAX_WHITE;
+                ( channel_image[blue][cnt] * range_blue ) / MAX_WHITE;
         } /* for( cnt = 0; cnt < (int)channel_image_size; cnt++ ) */
     }
 }

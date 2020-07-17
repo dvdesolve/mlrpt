@@ -20,8 +20,7 @@
 #include "../common/shared.h"
 #include "../decoder/medet.h"
 #include "../demodulator/demod.h"
-#include "../sdr/airspy.h"
-#include "../sdr/rtlsdr.h"
+#include "../sdr/SoapySDR.h"
 #include "utils.h"
 
 #include <semaphore.h>
@@ -45,39 +44,19 @@ static void Decode_Images(void);
  * Initialize Reception of signal from Satellite
  */
 static bool Init_Reception(void) {
-  /* Initialize semaphore */
-  sem_init( &demod_semaphore, 0, 0 );
+    /* Initialize semaphore */
+    sem_init(&demod_semaphore, 0, 0);
 
-  /* Initialize RTLSDR device */
-  switch( rc_data.sdr_rx_type )
-  {
-    case SDR_TYPE_RTLSDR:
-      if( !RtlSdr_Initialize() )
-      {
+    /* Initialize SoapySDR device */
+    if (!SoapySDR_Init()) {
         Cleanup();
-        Print_Message( "Failed to Initialize RTL-SDR", ERROR_MESG );
-        return( false );
-      }
-      Print_Message( "Decoding from RTL-SDR Receiver", INFO_MESG );
-      break;
+        Print_Message("Failed to Initialize SoapySDR", ERROR_MESG);
+        return false;
+    }
 
-    case SDR_TYPE_AIRSPY:
-      if( !Airspy_Initialize() )
-      {
-        Cleanup();
-        Print_Message( "Failed to Initialize Airspy", ERROR_MESG );
-        return( false );
-      }
-      Print_Message( "Decoding from Airspy Receiver", INFO_MESG );
-      break;
+    Print_Message("Decoding from SoapySDR Receiver", INFO_MESG);
 
-    default:
-      Print_Message( "SDR Device Type Invalid - Exiting", ERROR_MESG );
-      exit( -1 );
-
-  } /* switch( rc_data.sdr_rx_type ) */
-
-  return( true );
+    return true;
 }
 
 /*****************************************************************************/
@@ -87,17 +66,18 @@ static bool Init_Reception(void) {
  * Initializes all needed to receive and decode images
  */
 static bool Initialize_All(void) {
-  /* Initialize Reception, abort on error */
-  if( !Init_Reception() ) return( false );
+    /* Initialize reception, abort on error */
+    if (!Init_Reception())
+        return false;
 
-  /* Create Demodulator object */
-  Demod_Init();
+    /* Init demodulator object */
+    Demod_Init();
 
-  /* Initialize Meteor Image Decoder */
-  Medet_Init();
+    /* Initialize Meteor Image Decoder */
+    Medet_Init();
 
-  SetFlag( ALL_INITIALIZED );
-  return( true );
+    SetFlag(ALL_INITIALIZED);
+    return true;
 }
 
 /*****************************************************************************/
@@ -111,9 +91,9 @@ static void Decode_Images(void) {
   char mesg[MESG_SIZE];
 
   snprintf( mesg, MESG_SIZE,
-      "Operation Timer Started: %u sec", rc_data.operation_time );
+      "Decode Timer Started: %u sec", rc_data.decode_timer );
   Print_Message( mesg, INFO_MESG );
-  alarm( rc_data.operation_time );
+  alarm( rc_data.decode_timer );
 
   Print_Message( "Decoding of LRPT Images Started", INFO_MESG );
   SetFlag( ACTION_DECODE_IMAGES );
@@ -131,6 +111,13 @@ bool Start_Receiver(void) {
   SetFlag( ACTION_RECEIVER_ON );
   ClearFlag( ALARM_ACTION_START );
   Decode_Images();
+
+  SetFlag(STATUS_RECEIVING);
+  if (!SoapySDR_Activate_Stream()) {
+      ClearFlag(STATUS_RECEIVING);
+      return false;
+  }
+
   Demodulator_Run();
   return( true );
 }
@@ -153,30 +140,6 @@ void Alarm_Action(void) {
     else
       ClearFlag( ACTION_FLAGS_ALL );
   }
-}
-
-/*****************************************************************************/
-
-/* Oper_Timer_Setup()
- *
- * Handles the -t <timeout> option
- */
-void Oper_Timer_Setup(char *arg) {
-  /* Message string buffer */
-  char mesg[MESG_SIZE];
-
-  rc_data.operation_time = (uint32_t)( atoi(arg) * 60 );
-  if( rc_data.operation_time > MAX_OPERATION_TIME )
-  {
-    snprintf( mesg, MESG_SIZE,
-        "Operation Timer (%u sec) excessive?", rc_data.operation_time );
-    Print_Message( mesg, ERROR_MESG );
-  }
-
-  snprintf( mesg, MESG_SIZE,
-      "Operation Timer set to %u sec",
-      rc_data.operation_time );
-  Print_Message( mesg, INFO_MESG );
 }
 
 /*****************************************************************************/
@@ -251,20 +214,12 @@ void Auto_Timer_Setup(char *arg) {
   }
 
   /* Difference between start-stop times in sec */
-  rc_data.operation_time = (uint32_t)( stop_sec - sleep_sec );
-
-  /* Data sanity check */
-  if( rc_data.operation_time > MAX_OPERATION_TIME )
-  {
-    snprintf( mesg, MESG_SIZE,
-        "Operation Time (%u sec) excessive?", rc_data.operation_time );
-    Print_Message( mesg, ERROR_MESG );
-  }
+  rc_data.decode_timer = (uint32_t)( stop_sec - sleep_sec );
 
   /* Notify sleeping */
   snprintf( mesg, MESG_SIZE,
-      "Paused till %02d:%02d UTC. Operation Timer set to %u sec",
-      start_hrs, start_min, rc_data.operation_time );
+      "Paused till %02d:%02d UTC. Decode Timer set to %u sec",
+      start_hrs, start_min, rc_data.decode_timer );
   Print_Message( mesg, INFO_MESG );
 
   /* Set sleep flag and wakeup action */

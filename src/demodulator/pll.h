@@ -25,9 +25,9 @@
 /*****************************************************************************/
 
 typedef enum ModScheme {
-    QPSK = 1, /* Standard QPSK as for Meteor M2 @72k sym rate */
-    DOQPSK,   /* Differential Offset QPSK as for Meteor M2-2 @72k sym rate */
-    IDOQPSK   /* Interleaved DOQPSK as for Meteor M2-2 @80k sym rate */
+    QPSK = 1, /* Standard QPSK */
+    DOQPSK,   /* Differential Offset QPSK */
+    IDOQPSK   /* Interleaved DOQPSK */
 } ModScheme;
 
 typedef struct Costas_t {

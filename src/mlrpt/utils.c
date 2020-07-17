@@ -19,8 +19,6 @@
 #include "../common/common.h"
 #include "../common/shared.h"
 #include "../demodulator/demod.h"
-#include "../sdr/airspy.h"
-#include "../sdr/rtlsdr.h"
 
 #include <turbojpeg.h>
 
@@ -37,7 +35,7 @@
 
 /*****************************************************************************/
 
-static bool MkdirRecurse(const char *path);
+static bool mkdirRecurse(const char *path);
 static const char *Filename(const char *fpath);
 
 /*****************************************************************************/
@@ -47,25 +45,24 @@ static int Flags = 0;
 
 /*****************************************************************************/
 
-/* PrepareCacheDirectory
+/* prepareCacheDirectory
  *
- * Find and create (if necessary) dirs with configs and final pictures.
+ * Find and create (if necessary) directory to store final images.
  * XDG specs are supported:
  * https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
  */
-bool PrepareCacheDirectory(void) {
+bool prepareCacheDirectory(void) {
     char *var_ptr;
 
-    /* cache for image storage is mandatory */
-    /* TODO allow user to select his own directory */
+    /* Cache for image storage is mandatory */
     if ((var_ptr = getenv("XDG_CACHE_HOME")))
-        snprintf(rc_data.mlrpt_imgs, sizeof(rc_data.mlrpt_imgs),
+        snprintf(mlrpt_img_dir, sizeof(mlrpt_img_dir),
                 "%s/%s", var_ptr, PACKAGE_NAME);
     else
-        snprintf(rc_data.mlrpt_imgs, sizeof(rc_data.mlrpt_imgs),
+        snprintf(mlrpt_img_dir, sizeof(mlrpt_img_dir),
                 "%s/.cache/%s", getenv("HOME"), PACKAGE_NAME);
 
-    if (!MkdirRecurse(rc_data.mlrpt_imgs)) {
+    if (!mkdirRecurse(mlrpt_img_dir)) {
         fprintf(stderr, "mlrpt: %s\n",
                 "can't access/create images cache directory");
 
@@ -77,18 +74,18 @@ bool PrepareCacheDirectory(void) {
 
 /*****************************************************************************/
 
-/* MkdirRecurse
+/* mkdirRecurse
  *
  * Create directory and all ancestors.
  * Adapted from:
  * https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950
  */
-static bool MkdirRecurse(const char *path) {
+static bool mkdirRecurse(const char *path) {
     const size_t len = strlen(path);
     char _path[MAX_FILE_NAME];
     char *p;
 
-    /* save directory path in a mutable var */
+    /* Save directory path in a mutable var */
     if (len > sizeof(_path) - 1) {
         errno = ENAMETOOLONG;
         return false;
@@ -96,10 +93,10 @@ static bool MkdirRecurse(const char *path) {
 
     strcpy(_path, path);
 
-    /* walk through the path string */
+    /* Walk through the path string */
     for (p = _path + 1; *p; p++) {
         if (*p == '/') {
-            /* temporarily truncate path */
+            /* Temporarily truncate path */
             *p = '\0';
 
             if (mkdir(_path, S_IRWXU) != 0) {
@@ -107,7 +104,7 @@ static bool MkdirRecurse(const char *path) {
                     return false;
             }
 
-            /* restore path */
+            /* Restore path */
             *p = '/';
         }
     }
@@ -146,10 +143,10 @@ void File_Name(char *file_name, uint32_t chn, const char *ext) {
     /* Combination pseudo-color image */
     if( chn == 3 )
       snprintf( file_name, MAX_FILE_NAME-1,
-        "%s/%s-Combo%s", rc_data.mlrpt_imgs, tim, ext );
+        "%s/%s-Combo%s", mlrpt_img_dir, tim, ext );
     else /* Channel image */
       snprintf( file_name, MAX_FILE_NAME-1,
-        "%s/%s-Ch%u%s", rc_data.mlrpt_imgs, tim, chn, ext );
+        "%s/%s-Ch%u%s", mlrpt_img_dir, tim, chn, ext );
   }
   else /* Remove leading spaces from file_name */
   {
@@ -382,22 +379,9 @@ void Save_Image_Raw(
 void Cleanup(void) {
   ClearFlag( ACTION_FLAGS_ALL );
 
-  switch( rc_data.sdr_rx_type )
-  {
-    case SDR_TYPE_RTLSDR:
-      RtlSdr_Close_Device();
-      break;
-
-    case SDR_TYPE_AIRSPY:
-      Airspy_Close_Device();
-      break;
-  }
-
+  Deinit_Chebyshev_Filter( &filter_data_i );
+  Deinit_Chebyshev_Filter( &filter_data_q );
   Demod_Deinit();
-
-  free_ptr( (void **)&(mtd_record.v.pair_distances) );
-  free_ptr( (void **)&(filter_data_i.samples_buf) );
-  free_ptr( (void **)&(filter_data_q.samples_buf) );
 
   ClearFlag( ALL_INITIALIZED );
 
