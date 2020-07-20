@@ -55,8 +55,8 @@
 #define NORM_RANGE_WHITE    1
 
 /* Max and min filter bandwidth */
-#define MIN_BANDWIDTH   100000
-#define MAX_BANDWIDTH   200000
+#define MIN_BANDWIDTH   90000
+#define MAX_BANDWIDTH   210000
 
 /* Size of char arrays (strings) for text messages */
 #define MESG_SIZE   512
@@ -72,22 +72,18 @@
 #define SUCCESS     0
 
 /* General definitions for image processing */
-#define MAX_FILE_NAME   PATH_MAX /* Max length for filenames */
+#define MAX_FILE_NAME   (PATH_MAX + 1) /* Max length for filenames */
 
 /* Safe fallback */
 #ifndef M_2PI
 #define M_2PI 6.28318530717958647692
 #endif
 
-/* DSP Filter Parameters */
-#define FILTER_RIPPLE   5.0
-#define FILTER_POLES    6
-
 /*****************************************************************************/
 
 /* Filter types */
 enum {
-    FILTER_LOWPASS = 1,
+    FILTER_LOWPASS = 0,
     FILTER_HIGHPASS,
     FILTER_BANDPASS
 };

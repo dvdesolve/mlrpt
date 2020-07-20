@@ -142,10 +142,10 @@ void File_Name(char *file_name, uint32_t chn, const char *ext) {
     /* TODO possibly dangerous because of system string length limits */
     /* Combination pseudo-color image */
     if( chn == 3 )
-      snprintf( file_name, MAX_FILE_NAME-1,
+      snprintf( file_name, MAX_FILE_NAME,
         "%s/%s-Combo%s", mlrpt_img_dir, tim, ext );
     else /* Channel image */
-      snprintf( file_name, MAX_FILE_NAME-1,
+      snprintf( file_name, MAX_FILE_NAME,
         "%s/%s-Ch%u%s", mlrpt_img_dir, tim, chn, ext );
   }
   else /* Remove leading spaces from file_name */

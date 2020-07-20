@@ -36,7 +36,7 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr ..
 Build and install `mlrpt`:
 ```
 make
-make install
+sudo make install
 ```
 
 Now you're ready to use `mlrpt`.

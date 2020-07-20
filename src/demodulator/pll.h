@@ -36,7 +36,7 @@ typedef struct Costas_t {
     double  damping, bandwidth;
     uint8_t locked;
     double  moving_average;
-    ModScheme mode;
+    ModScheme mode; /* TODO is it actually needed? */
 } Costas_t;
 
 /*****************************************************************************/
