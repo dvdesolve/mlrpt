@@ -35,7 +35,6 @@
 #define INTLV_DATA_LEN      72      /* Number of actual interleaved symbols */
 #define INTLV_SYNCDATA      80      /* Number of interleaved symbols + sync */
 
-/* TODO recheck why differs */
 #define SYNCD_DEPTH         4       /* How many consecutive sync words to search for */
 #define SYNCD_BUF_MARGIN    320     /* SYNCD_DEPTH * INTLV_SYNCDATA */
 #define SYNCD_BLOCK_SIZ     400     /* (SYNCD_DEPTH + 1) * INTLV_SYNCDATA */
