@@ -7,7 +7,7 @@
 
 ### Software
 In order to use `mlrpt` you should have the following dependencies satisfied:
-- `SoapySDR` (install proper modules to get support for your hardware)
+- `SoapySDR` (0.8.0 or higher). Be sure to install proper modules to get support for your specific hardware!
 - `libjpeg-turbo`
 - `libconfig`
 
